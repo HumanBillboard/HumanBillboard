@@ -1,0 +1,16 @@
+{
+  "name": "HumanBillboard",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/HumanBillboard/HumanBillboard.git",
+  "author": "patela16 <anishdpatel28@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "20": "^3.1.9"
+  }
+}
