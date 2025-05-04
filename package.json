@@ -13,6 +13,10 @@
   "dependencies": {
     "20": "^3.1.9",
     "dotenv": "^16.4.7",
-    "pg": "^8.14.0"
+    "pg": "^8.14.0",
+    "concurrently": "^8.2.2"
+  },
+  "scripts": {
+    "dev": "concurrently \"yarn workspace backend dev\" \"yarn workspace frontend dev\""
   }
 }
