@@ -7,18 +7,21 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import ApplicationActions from "@/components/application-actions"
 
-export default async function CampaignApplicationsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export default async function ApplicationsPage({ params }: { params: { id: string } }) {
   const { userId } = await auth()
-  
+
   if (!userId) {
     redirect("/auth/login")
   }
 
   const supabase = createClient()
 
-  // Get campaign
-  const { data: campaign } = await supabase.from("campaigns").select("*").eq("id", id).single()
+  // Verify user owns this campaign
+  const { data: campaign } = await supabase
+    .from("campaigns")
+    .select("*")
+    .eq("id", params.id)
+    .single()
 
   if (!campaign || campaign.business_id !== userId) {
     redirect("/business/dashboard")
@@ -31,7 +34,7 @@ export default async function CampaignApplicationsPage({ params }: { params: Pro
       *,
       advertiser:user_profiles!applications_advertiser_id_fkey(*)
     `)
-    .eq("campaign_id", id)
+    .eq("campaign_id", params.id)
     .order("created_at", { ascending: false })
 
   return (
@@ -100,7 +103,9 @@ export default async function CampaignApplicationsPage({ params }: { params: Pro
                       <p className="text-sm text-[#D9D9D9]/70">
                         Applied {new Date(application.created_at).toLocaleDateString()}
                       </p>
-                      {application.status === "pending" && <ApplicationActions applicationId={application.id} />}
+                      {application.status === "pending" && (
+                        <ApplicationActions applicationId={application.id} />
+                      )}
                     </div>
                   </CardContent>
                 </Card>

@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { z } from "zod"
+import { applicationSchema } from "@/lib/validation"
 
 interface ApplicationFormProps {
   campaignId: string
@@ -26,13 +28,17 @@ export default function ApplicationForm({ campaignId, advertiserId }: Applicatio
     setIsLoading(true)
     setError(null)
 
-    const supabase = createClient()
-
     try {
+      // VALIDATE input before submitting (prevents XSS)
+      const validatedData = applicationSchema.parse({
+        message: message,
+      })
+
+      const supabase = createClient()
       const { error } = await supabase.from("applications").insert({
         campaign_id: campaignId,
         advertiser_id: advertiserId,
-        message: message || null,
+        message: validatedData.message,
         status: "pending",
       })
 
@@ -41,7 +47,11 @@ export default function ApplicationForm({ campaignId, advertiserId }: Applicatio
       router.push("/advertiser/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      if (error instanceof z.ZodError) {
+        setError(error.errors[0].message)
+      } else {
+        setError(error instanceof Error ? error.message : "An error occurred")
+      }
     } finally {
       setIsLoading(false)
     }

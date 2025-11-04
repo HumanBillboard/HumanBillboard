@@ -196,12 +196,6 @@ This outlines how campaign pages, the application form, and application action c
 
 ---
 
-## Tips & next steps
-- The diagrams are intentionally high-level. If you want class diagrams at the code level (methods, exact props, types), I can generate per-file diagrams for a selected subset (for example: `components/application-form.tsx`, `lib/auth.ts`) with extracted props and function signatures.
-- You can render Mermaid in many Markdown previewers (VS Code Mermaid preview extension, GitHub's mermaid support in some contexts, etc.).
-
----
-
 ## Files referenced (quick jump list)
 - `app/page.tsx` — Home page
 - `app/auth/*` — Login/Signup/Onboarding/Logout

@@ -11,6 +11,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { z } from "zod"
+import { campaignSchema } from "@/lib/validation"
+import { checkCampaignLimit } from "@/app/actions/check-campaign-limit"
 
 interface CampaignFormProps {
   userId: string
@@ -48,19 +51,32 @@ export default function CampaignForm({ userId, campaign }: CampaignFormProps) {
     setIsLoading(true)
     setError(null)
 
-    const supabase = createClient()
-
     try {
-      const data = {
-        business_id: userId,
+      // CHECK 1: Can create campaign? (prevents spam)
+      const canCreate = await checkCampaignLimit(userId)
+      if (!canCreate) {
+        setError("You've reached the max number of campaigns (20). Close some before creating new ones.")
+        setIsLoading(false)
+        return
+      }
+
+      // CHECK 2: Validate input (prevents XSS/injection)
+      const validatedData = campaignSchema.parse({
         title: formData.title,
         description: formData.description,
         compensation_amount: Number.parseFloat(formData.compensation_amount.toString()),
         compensation_type: formData.compensation_type,
         location: formData.location,
         duration_hours: formData.duration_hours ? Number.parseInt(formData.duration_hours.toString()) : null,
-        requirements: formData.requirements || null,
+        requirements: formData.requirements,
         status: formData.status,
+      })
+
+      // NOW create campaign with validated data
+      const supabase = createClient()
+      const data = {
+        business_id: userId,
+        ...validatedData,
       }
 
       if (campaign) {
@@ -74,7 +90,11 @@ export default function CampaignForm({ userId, campaign }: CampaignFormProps) {
       router.push("/business/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      if (error instanceof z.ZodError) {
+        setError(error.errors[0].message)  // Show validation error
+      } else {
+        setError(error instanceof Error ? error.message : "An error occurred")
+      }
     } finally {
       setIsLoading(false)
     }

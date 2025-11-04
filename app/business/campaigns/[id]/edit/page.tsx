@@ -5,8 +5,7 @@ import CampaignForm from "@/components/campaign-form"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-export default async function EditCampaignPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export default async function EditCampaignPage({ params }: { params: { id: string } }) {
   const { userId } = await auth()
   
   if (!userId) {
@@ -14,7 +13,7 @@ export default async function EditCampaignPage({ params }: { params: Promise<{ i
   }
 
   const supabase = createClient()
-  const { data: campaign } = await supabase.from("campaigns").select("*").eq("id", id).single()
+  const { data: campaign } = await supabase.from("campaigns").select("*").eq("id", params.id).single()
 
   if (!campaign || campaign.business_id !== userId) {
     redirect("/business/dashboard")
