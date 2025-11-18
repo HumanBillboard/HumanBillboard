@@ -29,12 +29,12 @@ export default async function AdvertiserDashboard() {
     redirect("/business/dashboard")
   }
 
-  // Get user's applications
+  // Get user's applications with campaign and business info
   const { data: applications } = await supabase
     .from("applications")
     .select(`
       *,
-      campaign:campaigns(*)
+      campaign:campaigns(*, business:user_profiles!campaigns_business_id_fkey(id, company_name))
     `)
     .eq("advertiser_id", userId)
     .order("created_at", { ascending: false })
@@ -151,6 +151,15 @@ export default async function AdvertiserDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="mb-4 flex flex-wrap gap-4 text-sm text-[#D9D9D9]/70">
+                        <div>
+                          <span className="font-semibold text-[#D9D9D9]">Company:</span>{" "}
+                          <Link
+                            href={`/advertiser/profile/${(campaign as any)?.business?.id}`}
+                            className="text-[#8BFF61] hover:underline"
+                          >
+                            {(campaign as any)?.business?.company_name || "Unknown"}
+                          </Link>
+                        </div>
                         <div>
                           <span className="font-semibold text-[#D9D9D9]">Compensation:</span> $
                           {campaign?.compensation_amount}/{campaign?.compensation_type}

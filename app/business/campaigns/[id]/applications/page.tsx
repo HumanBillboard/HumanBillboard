@@ -71,9 +71,14 @@ export default async function ApplicationsPage({ params }: { params: { id: strin
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="mb-2 flex items-center gap-2">
-                          <CardTitle className="text-[#D9D9D9]">
-                            {application.advertiser?.full_name || "Anonymous"}
-                          </CardTitle>
+                          <Link
+                            href={`/business/profile/${application.advertiser?.id}`}
+                            className="text-lg font-semibold text-[#8BFF61] hover:underline"
+                          >
+                            <CardTitle className="text-[#D9D9D9]">
+                              {application.advertiser?.full_name || "Anonymous"}
+                            </CardTitle>
+                          </Link>
                           <Badge
                             variant={application.status === "accepted" ? "default" : "secondary"}
                             className={

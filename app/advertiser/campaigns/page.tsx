@@ -27,10 +27,13 @@ export default async function BrowseCampaignsPage() {
     redirect("/business/dashboard")
   }
 
-  // Get all active campaigns
+  // Get all active campaigns with business info
   const { data: campaigns } = await supabase
     .from("campaigns")
-    .select("*")
+    .select(`
+      *,
+      business:user_profiles!campaigns_business_id_fkey(id, company_name)
+    `)
     .eq("status", "active")
     .order("created_at", { ascending: false })
 
@@ -95,6 +98,15 @@ export default async function BrowseCampaignsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="mb-4 space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#D9D9D9]/70">Company</span>
+                        <Link
+                          href={`/advertiser/profile/${(campaign as any).business?.id}`}
+                          className="font-semibold text-[#8BFF61] hover:underline"
+                        >
+                          {(campaign as any).business?.company_name || "Unknown"}
+                        </Link>
+                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-[#D9D9D9]/70">Compensation</span>
                         <span className="font-semibold text-[#8BFF61]">
