@@ -50,9 +50,9 @@ export default function AdvertiserProfileForm({
         .update({
           full_name: validatedData.full_name,
           email: validatedData.email,
-          phone: validatedData.phone || null,
-          city: validatedData.city || null,
-          state: validatedData.state || null,
+          phone: validatedData.phone,
+          city: validatedData.city,
+          state: validatedData.state,
         })
         .eq("id", profile.id)
 
@@ -103,7 +103,7 @@ export default function AdvertiserProfileForm({
   return (
     <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit}>
+        <form id="profile-form" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-4">
             <div className="grid gap-2">
               <Label htmlFor="full_name" className="text-[#D9D9D9]">

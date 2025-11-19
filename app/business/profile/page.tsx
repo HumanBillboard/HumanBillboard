@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +15,7 @@ export default async function BusinessProfilePage() {
     redirect("/auth/login")
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Get user profile
   const { data: profile } = await supabase

@@ -54,12 +54,12 @@ export default function BusinessProfileForm({
         .update({
           company_name: validatedData.company_name,
           email: validatedData.email,
-          phone: validatedData.phone || null,
-          industry: validatedData.industry || null,
-          description: validatedData.description || null,
-          address: validatedData.address || null,
-          city: validatedData.city || null,
-          state: validatedData.state || null,
+          phone: validatedData.phone,
+          industry: validatedData.industry,
+          description: validatedData.description,
+          address: validatedData.address,
+          city: validatedData.city,
+          state: validatedData.state,
         })
         .eq("id", profile.id)
 
@@ -122,7 +122,7 @@ export default function BusinessProfileForm({
   return (
     <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
       <CardContent className="pt-6">
-        <form onSubmit={handleSubmit}>
+        <form id="profile-form" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-4">
             <div className="grid gap-2">
               <Label htmlFor="company_name" className="text-[#D9D9D9]">

@@ -87,19 +87,6 @@ export function sanitizeInput(input: string, maxLength: number = 1000): string {
 }
 
 /**
- * Validates email format
- */
-export const emailSchema = z.string().email("Invalid email address")
-
-/**
- * Validates phone number (basic)
- */
-export const phoneSchema = z
-  .string()
-  .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
-  .optional()
-
-/**
  * Advertiser (Influencer) profile validation schema
  * All fields are required when editing
  */

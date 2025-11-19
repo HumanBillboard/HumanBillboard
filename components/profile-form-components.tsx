@@ -80,36 +80,35 @@ export function ProfileEditMode({
   return (
     <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
       <CardContent className="pt-6">
-        <form onSubmit={(e) => e.preventDefault()}>
-          <div className="flex flex-col gap-4">
-            {children}
+        <div className="flex flex-col gap-4">
+          {children}
 
-            {error && (
-              <div className="rounded bg-red-500/10 p-3 text-sm text-red-500">
-                {error}
-              </div>
-            )}
-
-            <div className="flex gap-2 pt-4">
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="flex-1 bg-[#8BFF61] text-[#171717] hover:bg-[#8BFF61]/90 disabled:opacity-50"
-              >
-                {isLoading ? "Saving..." : "Save Changes"}
-              </Button>
-              <Button
-                type="button"
-                onClick={onCancel}
-                variant="outline"
-                disabled={isLoading}
-                className="flex-1 border-[#D9D9D9]/20 text-[#D9D9D9] hover:bg-[#D9D9D9]/10"
-              >
-                Cancel
-              </Button>
+          {error && (
+            <div className="rounded bg-red-500/10 p-3 text-sm text-red-500">
+              {error}
             </div>
+          )}
+
+          <div className="flex gap-2 pt-4">
+            <Button
+              type="submit"
+              form="profile-form"
+              disabled={isLoading}
+              className="flex-1 bg-[#8BFF61] text-[#171717] hover:bg-[#8BFF61]/90 disabled:opacity-50"
+            >
+              {isLoading ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button
+              type="button"
+              onClick={onCancel}
+              variant="outline"
+              disabled={isLoading}
+              className="flex-1 border-[#D9D9D9]/20 text-[#D9D9D9] hover:bg-[#D9D9D9]/10"
+            >
+              Cancel
+            </Button>
           </div>
-        </form>
+        </div>
       </CardContent>
     </Card>
   )

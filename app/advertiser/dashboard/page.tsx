@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import type { Application } from "@/lib/types"
+import type { Application, Campaign, UserProfile } from "@/lib/types"
+
+interface ApplicationWithCampaignAndBusiness extends Application {
+  campaign: Campaign & {
+    business: Pick<UserProfile, "id" | "company_name"> | null
+  }
+}
 
 // async function to render the advertiser dashboard page
 export default async function AdvertiserDashboard() {
@@ -16,7 +22,7 @@ export default async function AdvertiserDashboard() {
   }
 
   // Create Supabase client, works better for serverless environments
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Fetch user profile from Supabase
   const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", userId).single()
@@ -38,6 +44,7 @@ export default async function AdvertiserDashboard() {
     `)
     .eq("advertiser_id", userId)
     .order("created_at", { ascending: false })
+    .returns<ApplicationWithCampaignAndBusiness[]>()
 
   return (
     <div className="min-h-screen bg-[#171717]">
@@ -154,10 +161,10 @@ export default async function AdvertiserDashboard() {
                         <div>
                           <span className="font-semibold text-[#D9D9D9]">Company:</span>{" "}
                           <Link
-                            href={`/advertiser/profile/${(campaign as any)?.business?.id}`}
+                            href={`/advertiser/profile/${(application as ApplicationWithCampaignAndBusiness)?.campaign?.business?.id}`}
                             className="text-[#8BFF61] hover:underline"
                           >
-                            {(campaign as any)?.business?.company_name || "Unknown"}
+                            {(application as ApplicationWithCampaignAndBusiness)?.campaign?.business?.company_name || "Unknown"}
                           </Link>
                         </div>
                         <div>
