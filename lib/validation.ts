@@ -87,18 +87,82 @@ export function sanitizeInput(input: string, maxLength: number = 1000): string {
 }
 
 /**
- * Validates email format
+ * Advertiser (Influencer) profile validation schema
+ * All fields are required when editing
  */
-export const emailSchema = z.string().email("Invalid email address")
+export const advertiserProfileSchema = z.object({
+  full_name: z
+    .string()
+    .min(1, "Name is required")
+    .max(100, "Name must be less than 100 characters")
+    .trim(),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Invalid email address"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required"),
+  city: z
+    .string()
+    .min(1, "City is required")
+    .max(100, "City must be less than 100 characters")
+    .trim(),
+  state: z
+    .string()
+    .min(1, "State is required")
+    .max(2, "State must be 2 characters (e.g., CA, NY)")
+    .trim()
+    .toUpperCase(),
+})
 
 /**
- * Validates phone number (basic)
+ * Business profile validation schema
+ * All fields are required when editing
  */
-export const phoneSchema = z
-  .string()
-  .regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number")
-  .optional()
-  .nullable()
+export const businessProfileSchema = z.object({
+  company_name: z
+    .string()
+    .min(1, "Company name is required")
+    .max(100, "Company name must be less than 100 characters")
+    .trim(),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Invalid email address"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required"),
+  industry: z
+    .string()
+    .min(1, "Industry is required")
+    .max(100, "Industry must be less than 100 characters")
+    .trim(),
+  description: z
+    .string()
+    .min(1, "Description is required")
+    .max(1000, "Description must be less than 1000 characters")
+    .trim(),
+  address: z
+    .string()
+    .min(1, "Address is required")
+    .max(200, "Address must be less than 200 characters")
+    .trim(),
+  city: z
+    .string()
+    .min(1, "City is required")
+    .max(100, "City must be less than 100 characters")
+    .trim(),
+  state: z
+    .string()
+    .min(1, "State is required")
+    .max(2, "State must be 2 characters (e.g., CA, NY)")
+    .trim()
+    .toUpperCase(),
+})
+
+export type AdvertiserProfile = z.infer<typeof advertiserProfileSchema>
+export type BusinessProfile = z.infer<typeof businessProfileSchema>
 
 export type Campaign = z.infer<typeof campaignSchema>
 export type Application = z.infer<typeof applicationSchema>

@@ -7,6 +7,11 @@ export interface UserProfile {
   user_type: UserType
   company_name: string | null
   phone: string | null
+  industry: string | null
+  description: string | null
+  address: string | null
+  city: string | null
+  state: string | null
   created_at: string
   updated_at: string
 }

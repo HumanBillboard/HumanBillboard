@@ -59,16 +59,23 @@ export default async function BusinessDashboard() {
           <Link href="/" className="text-2xl font-bold text-[#D9D9D9]">
             Human<span className="text-[#8BFF61]">Billboard</span>
           </Link>
-          <form action="/auth/logout" method="POST">
-            <Button
-              type="submit"
-              variant="ghost"
-              className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10"
-              style={{ borderRadius: "5px" }}
-            >
-              Sign out
-            </Button>
-          </form>
+          <div className="flex items-center gap-4">
+            <Link href="/business/profile">
+              <Button variant="ghost" className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10" style={{ borderRadius: "5px" }}>
+                My Profile
+              </Button>
+            </Link>
+            <form action="/auth/logout" method="POST">
+              <Button
+                type="submit"
+                variant="ghost"
+                className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10"
+                style={{ borderRadius: "5px" }}
+              >
+                Sign out
+              </Button>
+            </form>
+          </div>
         </div>
       </nav>
 

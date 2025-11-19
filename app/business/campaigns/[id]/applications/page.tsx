@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +14,7 @@ export default async function ApplicationsPage({ params }: { params: { id: strin
     redirect("/auth/login")
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Verify user owns this campaign
   const { data: campaign } = await supabase
@@ -71,9 +71,14 @@ export default async function ApplicationsPage({ params }: { params: { id: strin
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="mb-2 flex items-center gap-2">
-                          <CardTitle className="text-[#D9D9D9]">
-                            {application.advertiser?.full_name || "Anonymous"}
-                          </CardTitle>
+                          <Link
+                            href={`/business/profile/${application.advertiser?.id}`}
+                            className="text-lg font-semibold text-[#8BFF61] hover:underline"
+                          >
+                            <CardTitle className="text-[#D9D9D9]">
+                              {application.advertiser?.full_name || "Anonymous"}
+                            </CardTitle>
+                          </Link>
                           <Badge
                             variant={application.status === "accepted" ? "default" : "secondary"}
                             className={
