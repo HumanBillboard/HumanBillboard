@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import ApplicationActions from "@/components/application-actions"
 
-export default async function ApplicationsPage({ params }: { params: { id: string } }) {
+export default async function ApplicationsPage({ params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth()
+  const { id } = await params
 
   if (!userId) {
     redirect("/auth/login")
@@ -20,7 +21,7 @@ export default async function ApplicationsPage({ params }: { params: { id: strin
   const { data: campaign } = await supabase
     .from("campaigns")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single()
 
   if (!campaign || campaign.business_id !== userId) {
@@ -34,7 +35,7 @@ export default async function ApplicationsPage({ params }: { params: { id: strin
       *,
       advertiser:user_profiles!applications_advertiser_id_fkey(*)
     `)
-    .eq("campaign_id", params.id)
+    .eq("campaign_id", id)
     .order("created_at", { ascending: false })
 
   return (

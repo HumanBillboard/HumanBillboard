@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { z } from "zod"
 import { applicationSchema } from "@/lib/validation"
+import { sendApplicationReceivedNotification } from "@/app/actions/send-notification-emails"
 
 interface ApplicationFormProps {
   campaignId: string
@@ -35,6 +36,17 @@ export default function ApplicationForm({ campaignId, advertiserId }: Applicatio
       })
 
       const supabase = createClient()
+      
+      // Get campaign and advertiser info for email notification
+      const [campaignRes, advertiserRes] = await Promise.all([
+        supabase.from("campaigns").select("*, business:user_profiles!campaigns_business_id_fkey(id, email, company_name, full_name)").eq("id", campaignId).single(),
+        supabase.from("user_profiles").select("*").eq("id", advertiserId).single(),
+      ])
+
+      const campaign = campaignRes.data
+      const advertiser = advertiserRes.data
+
+      // Insert application
       const { error } = await supabase.from("applications").insert({
         campaign_id: campaignId,
         advertiser_id: advertiserId,
@@ -43,6 +55,17 @@ export default function ApplicationForm({ campaignId, advertiserId }: Applicatio
       })
 
       if (error) throw error
+
+      // Send email notification to business owner
+      if (campaign?.business && advertiser) {
+        await sendApplicationReceivedNotification(
+          campaign.business.email || "",
+          campaign.business.company_name || campaign.business.full_name || "Business Owner",
+          campaign.title,
+          advertiser.full_name || "An advertiser",
+          validatedData.message || undefined
+        )
+      }
 
       router.push("/advertiser/dashboard")
       router.refresh()

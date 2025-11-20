@@ -17,6 +17,6 @@ export async function POST() {
     // Continue to redirect even if revocation fails
   }
 
-  // Redirect to login page where user can sign in with different account
+  // Redirect to home page where Clerk middleware will detect no session and redirect to login
   return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"))
 }
