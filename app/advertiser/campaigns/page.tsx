@@ -6,10 +6,11 @@ import ClerkSignOut from "@/components/clerk-signout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { ProfileAvatar } from "@/components/profile-avatar"
 import type { Campaign, UserProfile } from "@/lib/types"
 
 interface CampaignWithBusiness extends Campaign {
-  business: Pick<UserProfile, "id" | "company_name"> | null
+  business: Pick<UserProfile, "id" | "company_name" | "profile_picture_url"> | null
 }
 
 export default async function BrowseCampaignsPage() {
@@ -37,7 +38,7 @@ export default async function BrowseCampaignsPage() {
     .from("campaigns")
     .select(`
       *,
-      business:user_profiles!campaigns_business_id_fkey(id, company_name)
+      business:user_profiles!campaigns_business_id_fkey(id, company_name, profile_picture_url)
     `)
     .eq("status", "active")
     .order("created_at", { ascending: false })
@@ -94,16 +95,27 @@ export default async function BrowseCampaignsPage() {
                     <CardDescription className="text-[#D9D9D9]/70">{campaign.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    <div className="mb-4 flex items-center gap-3 pb-3 border-b border-[#D9D9D9]/20">
+                      <ProfileAvatar
+                        src={(campaign as CampaignWithBusiness).business?.profile_picture_url || null}
+                        alt={(campaign as CampaignWithBusiness).business?.company_name || "Business"}
+                        fallback={
+                          (campaign as CampaignWithBusiness).business?.company_name
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase() || "B"
+                        }
+                        size="sm"
+                      />
+                      <Link
+                        href={`/advertiser/profile/${(campaign as CampaignWithBusiness).business?.id}`}
+                        className="text-sm font-semibold text-[#8BFF61] hover:underline"
+                      >
+                        {(campaign as CampaignWithBusiness).business?.company_name || "Unknown"}
+                      </Link>
+                    </div>
                     <div className="mb-4 space-y-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[#D9D9D9]/70">Company</span>
-                        <Link
-                          href={`/advertiser/profile/${(campaign as CampaignWithBusiness).business?.id}`}
-                          className="font-semibold text-[#8BFF61] hover:underline"
-                        >
-                          {(campaign as CampaignWithBusiness).business?.company_name || "Unknown"}
-                        </Link>
-                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-[#D9D9D9]/70">Compensation</span>
                         <span className="font-semibold text-[#8BFF61]">
