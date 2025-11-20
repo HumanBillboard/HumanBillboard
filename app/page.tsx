@@ -1,5 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
+// Static video served from public/media folder (fast start)
+const heroVideoSrc = "/media/video.mp4"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -9,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { VideoPlaylist } from "@/components/video-playlist"
+// Removed VideoPlaylist in favor of single looping video
 
 export default function HomePage() {
   return (
@@ -65,14 +67,13 @@ export default function HomePage() {
           </div>
           <div className="relative">
             <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/40">
-              <VideoPlaylist
-                className="h-[420px] md:h-[520px]"
-                sources={[
-                  "/api/media/media1.mp4",
-                  "/api/media/media2.mp4",
-                  "/api/media/media3.mp4",
-                  "/api/media/media4.mp4",
-                ]}
+              <video
+                src={heroVideoSrc}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="h-[420px] w-full object-cover md:h-[520px]"
                 poster="/placeholder.svg?height=560&width=720"
               />
             </div>
@@ -93,19 +94,22 @@ export default function HomePage() {
             {[{
               title: "Boost local brand awareness",
               desc: "Hire nearby ambassadors to walk your message into community hubs.",
+              img: "/media/1.png",
             },{
               title: "Cost-effective marketing solution",
               desc: "Pay for presence, not impressions. Control budgets and timelines.",
+              img: "/media/2.png",
             },{
               title: "Build genuine connections",
               desc: "Create memorable interactions with real people in real places.",
+              img: "/media/3.png",
             }].map((f, i) => (
               <Card key={i} className="border-white/10 bg-[#121212]">
                 <CardHeader className="gap-4">
                   <div className="overflow-hidden rounded-md border border-white/10">
                     <Image
-                      src={`/placeholder.svg?height=180&width=480&text=Image+${i+1}`}
-                      alt="feature"
+                      src={f.img}
+                      alt={f.title}
                       width={480}
                       height={180}
                       className="h-40 w-full object-cover"
@@ -148,7 +152,7 @@ export default function HomePage() {
           </div>
           <div className="relative">
             <div className="overflow-hidden rounded-xl border border-white/10">
-              <Image src="/placeholder.svg?height=520&width=640" alt="Ambassador" width={640} height={520} className="h-full w-full object-cover" />
+              <Image src="/media/4.png" alt="Ambassador participant" width={640} height={520} className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
@@ -170,7 +174,7 @@ export default function HomePage() {
         </div>
         <div className="mx-auto mt-10 max-w-7xl px-6">
           <div className="overflow-hidden rounded-xl border border-white/10">
-            <Image src="/placeholder.svg?height=560&width=1280" alt="Hero" width={1280} height={560} className="h-auto w-full object-cover" />
+            <Image src="/media/5.png" alt="Community brand connection" width={1280} height={560} className="h-auto w-full object-cover" />
           </div>
         </div>
       </section>
@@ -179,7 +183,7 @@ export default function HomePage() {
       <section className="border-b border-[#D9D9D9]/10 py-16">
         <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-6 md:grid-cols-[280px_1fr]">
           <div className="overflow-hidden rounded-xl border border-white/10">
-            <Image src="/placeholder.svg?height=260&width=280" alt="Customer" width={280} height={260} className="h-full w-full object-cover" />
+            <Image src="/media/1.png" alt="Testimonial person" width={280} height={260} className="h-full w-full object-cover" />
           </div>
           <Card className="border-white/10 bg-[#121212]">
             <CardContent className="py-6">
@@ -210,7 +214,7 @@ export default function HomePage() {
         </div>
         <div className="mx-auto mt-10 max-w-5xl px-6">
           <div className="overflow-hidden rounded-xl border border-white/10">
-            <Image src="/placeholder.svg?height=520&width=1024" alt="Showcase" width={1024} height={520} className="h-auto w-full object-cover" />
+            <Image src="/media/2.png" alt="Brand showcase" width={1024} height={520} className="h-auto w-full object-cover" />
           </div>
         </div>
       </section>
