@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
+import ClerkSignOut from "@/components/clerk-signout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
@@ -65,16 +66,7 @@ export default async function AdvertiserDashboard() {
                 My Profile
               </Button>
             </Link>
-            <form action="/auth/logout" method="POST">
-              <Button
-                type="submit"
-                variant="ghost"
-                className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10"
-                style={{ borderRadius: "5px" }}
-              >
-                Sign out
-              </Button>
-            </form>
+            <ClerkSignOut />
           </div>
         </div>
       </nav>
