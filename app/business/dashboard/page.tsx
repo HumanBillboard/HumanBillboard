@@ -49,8 +49,29 @@ export default async function BusinessDashboard() {
       total: campaignApps.length,
       pending: campaignApps.filter((app) => app.status === "pending").length,
       accepted: campaignApps.filter((app) => app.status === "accepted").length,
+      rejected: campaignApps.filter((app) => app.status === "rejected").length,
     }
   })
+
+  // Aggregate performance metrics for business owner
+  const totalCampaigns = campaigns?.length || 0
+  const activeCampaigns = campaigns?.filter((c) => c.status === "active").length || 0
+  const totalApplications = applications?.length || 0
+  const acceptedApplications = applications?.filter((a) => a.status === "accepted").length || 0
+  const pendingApplications = applications?.filter((a) => a.status === "pending").length || 0
+  const rejectedApplications = applications?.filter((a) => a.status === "rejected").length || 0
+  const acceptanceRate = totalApplications
+    ? Math.round((acceptedApplications / totalApplications) * 100)
+    : 0
+  const avgCompensationOffered = (() => {
+    if (!campaigns || !campaigns.length) return 0
+    return Math.round(
+      campaigns.reduce((sum, c) => sum + (c.compensation_amount || 0), 0) / campaigns.length
+    )
+  })()
+  const avgApplicationsPerCampaign = totalCampaigns
+    ? (totalApplications / totalCampaigns).toFixed(1)
+    : "0"
 
   return (
     <div className="min-h-screen bg-[#171717]">
@@ -85,28 +106,72 @@ export default async function BusinessDashboard() {
           </Link>
         </div>
 
-        {/* Stats */}
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Total Campaigns</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">{campaigns?.length || 0}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Active Campaigns</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">
-                {campaigns?.filter((c) => c.status === "active").length || 0}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Total Applications</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">{applications?.length || 0}</CardTitle>
-            </CardHeader>
-          </Card>
+        {/* Performance Metrics */}
+        <div className="mb-10">
+          <h2 className="mb-4 text-xl font-semibold text-[#D9D9D9]">Campaign Performance</h2>
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Campaigns</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{totalCampaigns}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Active</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{activeCampaigns}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Applications</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{totalApplications}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Accepted</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{acceptedApplications}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Pending</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{pendingApplications}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Rejected</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{rejectedApplications}</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Acceptance Rate</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{acceptanceRate}%</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Avg Compensation</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">${avgCompensationOffered}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Avg Apps / Campaign</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{avgApplicationsPerCampaign}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717] md:col-span-3" style={{ borderRadius: "5px" }}>
+              <CardContent className="pt-6 text-sm text-[#D9D9D9]/70">
+                Use compelling titles & clear requirements, keep compensation competitive, and actively review pending applications to increase acceptance.
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Campaigns List */}
