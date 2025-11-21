@@ -3,46 +3,18 @@
 import { useState, useRef, useEffect } from 'react'
 
 export function HeroVideo() {
-  const [isLoading, setIsLoading] = useState(true)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [overlayVisible, setOverlayVisible] = useState(true)
 
+  // Simple fixed 5 second overlay. No event listeners, no complex logic.
   useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-
-    const hideLoading = () => {
-      setIsLoading(false)
-    }
-
-    // Hide loading on video events
-    video.addEventListener('canplay', hideLoading)
-    video.addEventListener('playing', hideLoading)
-    video.addEventListener('loadeddata', hideLoading)
-    
-    // Force hide after 5 seconds as fallback
-    const timeout = setTimeout(() => {
-      setIsLoading(false)
-    }, 5000)
-    
-    return () => {
-      video.removeEventListener('canplay', hideLoading)
-      video.removeEventListener('playing', hideLoading)
-      video.removeEventListener('loadeddata', hideLoading)
-      clearTimeout(timeout)
-    }
+    const t = setTimeout(() => setOverlayVisible(false), 5000)
+    return () => clearTimeout(t)
   }, [])
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/40">
-      {/* Minimal loading indicator - only shows during initial load */}
-      {isLoading && (
-        <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2">
-          <div className="h-2 w-2 animate-spin rounded-full border-2 border-[#D9D9D9]/30 border-t-[#8BFF61]" />
-          <p className="text-xs text-[#D9D9D9]/40">Loading...</p>
-        </div>
-      )}
-
-      {/* Video - MP4 only for best performance */}
+    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black">
+      {/* Video element uses poster (browser-handled). We avoid JS poster logic to keep things simple. */}
       <video
         ref={videoRef}
         preload="auto"
@@ -50,16 +22,23 @@ export function HeroVideo() {
         loop
         muted
         playsInline
+        poster="/placeholder.jpg"
         className="h-[420px] w-full object-cover md:h-[520px]"
-        poster="/placeholder.svg?height=560&width=720"
-        onCanPlay={() => setIsLoading(false)}
-        onPlaying={() => setIsLoading(false)}
-        onLoadedData={() => setIsLoading(false)}
       >
-        {/* MP4 format - optimized for fast loading and smooth playback */}
         <source src="/media/video.mp4" type="video/mp4" />
         Your browser does not support the video tag.
       </video>
+
+      {/* Timed loading overlay (black + spinner) always shows for first 5s then fades out */}
+      <div
+        className={`absolute inset-0 flex items-center justify-center bg-black transition-opacity duration-500 ${overlayVisible ? 'opacity-100 z-40' : 'opacity-0 pointer-events-none'}`}
+        aria-hidden={!overlayVisible}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#333] border-t-[#8BFF61]" />
+          <p className="text-xs tracking-wide text-[#8BFF61]/80">Loading Film…</p>
+        </div>
+      </div>
     </div>
   )
 }
