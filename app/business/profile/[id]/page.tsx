@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { ProfileAvatar } from "@/components/profile-avatar"
 import type { UserProfile } from "@/lib/types"
 
 export default async function PublicAdvertiserProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -69,7 +70,19 @@ export default async function PublicAdvertiserProfilePage({ params }: { params: 
         {/* Profile Header */}
         <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
           <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex items-center gap-6">
+              <ProfileAvatar
+                src={advertiser.profile_picture_url}
+                alt={advertiser.full_name || "Advertiser"}
+                fallback={
+                  advertiser.full_name
+                    ?.split(" ")
+                    .map((n: string) => n[0])
+                    .join("")
+                    .toUpperCase() || "U"
+                }
+                size="lg"
+              />
               <div>
                 <CardTitle className="text-3xl text-[#D9D9D9]">{advertiser.full_name}</CardTitle>
                 <p className="mt-2 text-[#D9D9D9]/70">Influencer Profile</p>

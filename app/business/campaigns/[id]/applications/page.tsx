@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { ProfileAvatar } from "@/components/profile-avatar"
 import ApplicationActions from "@/components/application-actions"
 
 export default async function ApplicationsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -70,8 +71,20 @@ export default async function ApplicationsPage({ params }: { params: Promise<{ i
                 <Card key={application.id} className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div>
-                        <div className="mb-2 flex items-center gap-2">
+                      <div className="flex items-start gap-3">
+                        <ProfileAvatar
+                          src={application.advertiser?.profile_picture_url}
+                          alt={application.advertiser?.full_name || "Advertiser"}
+                          fallback={
+                            application.advertiser?.full_name
+                              ?.split(" ")
+                              .map((n: string) => n[0])
+                              .join("")
+                              .toUpperCase() || "U"
+                          }
+                          size="md"
+                        />
+                        <div>
                           <Link
                             href={`/business/profile/${application.advertiser?.id}`}
                             className="text-lg font-semibold text-[#8BFF61] hover:underline"
@@ -80,22 +93,22 @@ export default async function ApplicationsPage({ params }: { params: Promise<{ i
                               {application.advertiser?.full_name || "Anonymous"}
                             </CardTitle>
                           </Link>
-                          <Badge
-                            variant={application.status === "accepted" ? "default" : "secondary"}
-                            className={
-                              application.status === "accepted"
-                                ? "bg-[#8BFF61] text-[#171717]"
-                                : application.status === "rejected"
-                                  ? "bg-red-500/20 text-red-400"
-                                  : "bg-[#D9D9D9]/20 text-[#D9D9D9]"
-                            }
-                            style={{ borderRadius: "5px" }}
-                          >
-                            {application.status}
-                          </Badge>
+                          <CardDescription className="text-[#D9D9D9]/70">{application.advertiser?.email}</CardDescription>
                         </div>
-                        <CardDescription className="text-[#D9D9D9]/70">{application.advertiser?.email}</CardDescription>
                       </div>
+                      <Badge
+                        variant={application.status === "accepted" ? "default" : "secondary"}
+                        className={
+                          application.status === "accepted"
+                            ? "bg-[#8BFF61] text-[#171717]"
+                            : application.status === "rejected"
+                              ? "bg-red-500/20 text-red-400"
+                              : "bg-[#D9D9D9]/20 text-[#D9D9D9]"
+                        }
+                        style={{ borderRadius: "5px" }}
+                      >
+                        {application.status}
+                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>

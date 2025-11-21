@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import { ProfileAvatar } from "@/components/profile-avatar"
 import type { UserProfile } from "@/lib/types"
 
 export default async function PublicBusinessProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -69,7 +70,19 @@ export default async function PublicBusinessProfilePage({ params }: { params: Pr
         {/* Profile Header */}
         <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
           <CardHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex items-center gap-6">
+              <ProfileAvatar
+                src={business.profile_picture_url}
+                alt={business.company_name || "Business"}
+                fallback={
+                  business.company_name
+                    ?.split(" ")
+                    .map((n: string) => n[0])
+                    .join("")
+                    .toUpperCase() || "B"
+                }
+                size="lg"
+              />
               <div>
                 <CardTitle className="text-3xl text-[#D9D9D9]">{business.company_name}</CardTitle>
                 <p className="mt-2 text-[#D9D9D9]/70">{business.industry || "Business"}</p>

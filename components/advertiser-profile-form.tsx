@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { z } from "zod"
 import { advertiserProfileSchema } from "@/lib/validation"
+import { ProfilePictureUpload } from "@/components/profile-picture-upload"
 import type { UserProfile } from "@/lib/types"
 
 interface AdvertiserProfileFormProps {
@@ -73,7 +74,8 @@ export default function AdvertiserProfileForm({
 
   if (!isEditing) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
+        <ProfilePictureUpload profile={profile} isEditing={false} />
         <div className="grid gap-2">
           <Label className="text-xs font-semibold text-[#D9D9D9]/70">FULL NAME</Label>
           <p className="text-[#D9D9D9]">{profile.full_name || "—"}</p>
@@ -103,6 +105,9 @@ export default function AdvertiserProfileForm({
   return (
     <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
       <CardContent className="pt-6">
+        <div className="mb-6 flex justify-center">
+          <ProfilePictureUpload profile={profile} isEditing={true} />
+        </div>
         <form id="profile-form" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-4">
             <div className="grid gap-2">
