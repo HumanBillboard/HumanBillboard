@@ -44,6 +44,18 @@ export default async function ApplyCampaignPage({ params }: { params: Promise<{ 
     redirect("/advertiser/dashboard")
   }
 
+  // Fetch campaign application statuses for metrics (advertiser context)
+  const { data: campaignApplications } = await supabase
+    .from("applications")
+    .select("status")
+    .eq("campaign_id", id)
+
+  const totalApplications = campaignApplications?.length || 0
+  const acceptedCount = campaignApplications?.filter(a => a.status === "accepted").length || 0
+  const pendingCount = campaignApplications?.filter(a => a.status === "pending").length || 0
+  const rejectedCount = campaignApplications?.filter(a => a.status === "rejected").length || 0
+  const acceptanceRate = totalApplications > 0 ? (acceptedCount / totalApplications) * 100 : 0
+
   return (
     <div className="min-h-screen bg-[#171717]">
       {/* Navigation */}
@@ -92,6 +104,29 @@ export default async function ApplyCampaignPage({ params }: { params: Promise<{ 
                 <p className="text-sm text-[#D9D9D9]/70">{campaign.requirements}</p>
               </div>
             )}
+            {/* Metrics */}
+            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Total Applications</p>
+                <p className="text-xl font-bold text-[#D9D9D9]">{totalApplications}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Accepted</p>
+                <p className="text-xl font-bold text-[#8BFF61]">{acceptedCount}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Pending</p>
+                <p className="text-xl font-bold text-[#D9D9D9]">{pendingCount}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Rejected</p>
+                <p className="text-xl font-bold text-red-400">{rejectedCount}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Acceptance Rate</p>
+                <p className="text-xl font-bold text-[#D9D9D9]">{acceptanceRate.toFixed(1)}%</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
