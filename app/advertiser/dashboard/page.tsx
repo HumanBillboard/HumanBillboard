@@ -1,11 +1,17 @@
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import type { Application } from "@/lib/types"
+import type { Application, Campaign, UserProfile } from "@/lib/types"
+
+interface ApplicationWithCampaignAndBusiness extends Application {
+  campaign: Campaign & {
+    business: Pick<UserProfile, "id" | "company_name"> | null
+  }
+}
 
 // async function to render the advertiser dashboard page
 export default async function AdvertiserDashboard() {
@@ -16,7 +22,7 @@ export default async function AdvertiserDashboard() {
   }
 
   // Create Supabase client, works better for serverless environments
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Fetch user profile from Supabase
   const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", userId).single()
@@ -29,15 +35,16 @@ export default async function AdvertiserDashboard() {
     redirect("/business/dashboard")
   }
 
-  // Get user's applications
+  // Get user's applications with campaign and business info
   const { data: applications } = await supabase
     .from("applications")
     .select(`
       *,
-      campaign:campaigns(*)
+      campaign:campaigns(*, business:user_profiles!campaigns_business_id_fkey(id, company_name))
     `)
     .eq("advertiser_id", userId)
     .order("created_at", { ascending: false })
+    .returns<ApplicationWithCampaignAndBusiness[]>()
 
   return (
     <div className="min-h-screen bg-[#171717]">
@@ -51,6 +58,11 @@ export default async function AdvertiserDashboard() {
             <Link href="/advertiser/campaigns">
               <Button variant="ghost" className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10" style={{ borderRadius: "5px" }}>
                 Browse Campaigns
+              </Button>
+            </Link>
+            <Link href="/advertiser/profile">
+              <Button variant="ghost" className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10" style={{ borderRadius: "5px" }}>
+                My Profile
               </Button>
             </Link>
             <form action="/auth/logout" method="POST">
@@ -146,6 +158,15 @@ export default async function AdvertiserDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="mb-4 flex flex-wrap gap-4 text-sm text-[#D9D9D9]/70">
+                        <div>
+                          <span className="font-semibold text-[#D9D9D9]">Company:</span>{" "}
+                          <Link
+                            href={`/advertiser/profile/${(application as ApplicationWithCampaignAndBusiness)?.campaign?.business?.id}`}
+                            className="text-[#8BFF61] hover:underline"
+                          >
+                            {(application as ApplicationWithCampaignAndBusiness)?.campaign?.business?.company_name || "Unknown"}
+                          </Link>
+                        </div>
                         <div>
                           <span className="font-semibold text-[#D9D9D9]">Compensation:</span> $
                           {campaign?.compensation_amount}/{campaign?.compensation_type}
