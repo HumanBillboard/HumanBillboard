@@ -3,23 +3,14 @@ import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import ClerkSignOut from "@/components/clerk-signout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { ProfileAvatar } from "@/components/profile-avatar"
+import { redirect } from "next/navigation"
 import type { Campaign, UserProfile } from "@/lib/types"
 
 interface CampaignWithBusiness extends Campaign {
   business: Pick<UserProfile, "id" | "company_name" | "profile_picture_url"> | null
 }
-
-export default async function BrowseCampaignsPage() {
-  const { userId } = await auth()
-  
-  if (!userId) {
-    redirect("/auth/login")
-  }
-
-  const supabase = await createClient()
 
 function matchesFilter(value: any, filter?: string) {
   if (!filter) return true
@@ -35,17 +26,21 @@ function matchesExact(value: any, filter?: string) {
   return String(value) === filter
 }
 
-export default async function CampaignsPage({ searchParams }: { searchParams?: SearchParams }) {
+export default async function CampaignsPage({ searchParams }: { searchParams?: Record<string, string> }) {
   const { userId } = await auth()
-  const supabase = createClient()
+
+  if (!userId) {
+    redirect("/auth/login")
+  }
+
+  const supabase = await createClient()
 
   // Get all active campaigns with business info
   const { data: campaigns } = await supabase
     .from("campaigns")
-    .select(`
-      *,
-      business:user_profiles!campaigns_business_id_fkey(id, company_name, profile_picture_url)
-    `)
+    .select(
+      `*, business:user_profiles!campaigns_business_id_fkey(id, company_name, profile_picture_url)`
+    )
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .returns<CampaignWithBusiness[]>()
@@ -60,7 +55,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: S
   const minComp = minCompInput !== "" ? Number(minCompInput) : undefined
   const maxComp = maxCompInput !== "" ? Number(maxCompInput) : undefined
 
-  // Filter campaigns server-side in a flexible way (handles different schema shapes)
+  // Filter campaigns in a flexible way (handles different schema shapes)
   const displayed = Array.isArray(campaigns)
     ? campaigns.filter((c: any) => {
         // Exclude owner's campaigns when possible
@@ -72,11 +67,11 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: S
         const locationFields = ["location", "city", "place"]
         const locationMatches = locationFields.some((k) => matchesFilter(c[k], locationFilter))
 
-        // Merchandise type: could be "merchandise_type" or "merchandise_types" or "items"
+        // Merchandise type: could be several fields
         const merchFields = ["merchandise_type", "merchandise_types", "items", "products"]
         const merchMatches = merchFields.some((k) => matchesFilter(c[k], merchandiseFilter))
 
-        // Influencer demographics: could be nested or flat
+        // Influencer demographics
         const demoFields = ["influencer_demographics", "target_demographics", "demographics"]
         let genderMatches = true
         let ageMatches = true
@@ -86,19 +81,17 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: S
           for (const k of demoFields) {
             const val = c[k]
             if (!val) continue
-            // if object
             if (typeof val === "object") {
               if (genderFilter && val.gender && String(val.gender).toLowerCase().includes(genderFilter.toLowerCase())) genderMatches = true
               if (ageFilter && val.age_range && String(val.age_range).toLowerCase().includes(ageFilter.toLowerCase())) ageMatches = true
             } else {
-              // string or array
               if (genderFilter && matchesFilter(val, genderFilter)) genderMatches = true
               if (ageFilter && matchesFilter(val, ageFilter)) ageMatches = true
             }
           }
         }
 
-        // Compensation numeric filtering: handle common fields and compare to min/max when provided
+        // Compensation numeric filtering
         const compFields = ["compensation_amount", "compensation", "amount", "pay_amount", "budget"]
         const compVal = compFields.map((k) => c[k]).find((v) => v !== undefined && v !== null)
         const compNumber = compVal !== undefined && compVal !== null ? Number(compVal) : undefined
@@ -171,7 +164,6 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: S
               </Button>
             </div>
           </form>
-          {error && <p className="mt-2 text-sm text-red-400">Error loading campaigns: {error.message}</p>}
         </div>
 
         <div className="space-y-4">
@@ -184,48 +176,50 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: S
                       <CardTitle className="text-[#D9D9D9]">{campaign.title}</CardTitle>
                     </div>
                     <CardDescription className="text-[#D9D9D9]/70">{campaign.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-4 flex items-center gap-3 pb-3 border-b border-[#D9D9D9]/20">
-                      <ProfileAvatar
-                        src={(campaign as CampaignWithBusiness).business?.profile_picture_url || null}
-                        alt={(campaign as CampaignWithBusiness).business?.company_name || "Business"}
-                        fallback={
-                          (campaign as CampaignWithBusiness).business?.company_name
-                            ?.split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase() || "B"
-                        }
-                        size="sm"
-                      />
-                      <Link
-                        href={`/advertiser/profile/${(campaign as CampaignWithBusiness).business?.id}`}
-                        className="text-sm font-semibold text-[#8BFF61] hover:underline"
-                      >
-                        {(campaign as CampaignWithBusiness).business?.company_name || "Unknown"}
-                      </Link>
-                    </div>
-                    <div className="mb-4 space-y-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[#D9D9D9]/70">Compensation</span>
-                        <span className="font-semibold text-[#8BFF61]">
-                          ${campaign.compensation_amount}/{campaign.compensation_type}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[#D9D9D9]/70">Location</span>
-                        <span className="text-[#D9D9D9]">{campaign.location}</span>
-                      </div>
-                      {campaign.duration_hours && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-[#D9D9D9]/70">Duration</span>
-                          <span className="text-[#D9D9D9]">{campaign.duration_hours} hours</span>
-                        </div>
-                      )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 flex items-center gap-3 pb-3 border-b border-[#D9D9D9]/20">
+                  <ProfileAvatar
+                    src={(campaign as CampaignWithBusiness).business?.profile_picture_url || null}
+                    alt={(campaign as CampaignWithBusiness).business?.company_name || "Business"}
+                    fallback={
+                      (campaign as CampaignWithBusiness).business?.company_name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase() || "B"
+                    }
+                    size="sm"
+                  />
+                  <Link
+                    href={`/advertiser/profile/${(campaign as CampaignWithBusiness).business?.id}`}
+                    className="text-sm font-semibold text-[#8BFF61] hover:underline"
+                  >
+                    {(campaign as CampaignWithBusiness).business?.company_name || "Unknown"}
+                  </Link>
+                </div>
+
+                <div className="mb-4 space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#D9D9D9]/70">Compensation</span>
+                    <span className="font-semibold text-[#8BFF61]">
+                      ${campaign.compensation_amount}/{campaign.compensation_type}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#D9D9D9]/70">Location</span>
+                    <span className="text-[#D9D9D9]">{campaign.location}</span>
+                  </div>
+                  {campaign.duration_hours && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-[#D9D9D9]/70">Duration</span>
+                      <span className="text-[#D9D9D9]">{campaign.duration_hours} hours</span>
                     </div>
                   )}
                 </div>
+
                 <div className="flex gap-3">
                   <Link href={`/advertiser/campaigns/${campaign.id}/apply`}>
                     <Button className="bg-[#8BFF61] text-[#171717]" style={{ borderRadius: 6 }}>Apply</Button>
