@@ -47,6 +47,27 @@ export default async function AdvertiserDashboard() {
     .order("created_at", { ascending: false })
     .returns<ApplicationWithCampaignAndBusiness[]>()
 
+  // Derived performance metrics for advertiser
+  const totalApps = applications?.length || 0
+  const acceptedApps = applications?.filter((a) => a.status === "accepted").length || 0
+  const pendingApps = applications?.filter((a) => a.status === "pending").length || 0
+  const rejectedApps = applications?.filter((a) => a.status === "rejected").length || 0
+  const acceptanceRate = totalApps ? Math.round((acceptedApps / totalApps) * 100) : 0
+  const uniqueBusinesses = applications
+    ? new Set(applications.map((a) => a.campaign?.business?.id).filter(Boolean)).size
+    : 0
+  const avgAcceptedCompensation = (() => {
+    if (!applications || !acceptedApps) return 0
+    const accepted = applications.filter(
+      (a) => a.status === "accepted" && a.campaign?.compensation_amount
+    )
+    if (!accepted.length) return 0
+    return Math.round(
+      accepted.reduce((sum, a) => sum + (a.campaign!.compensation_amount || 0), 0) /
+        accepted.length
+    )
+  })()
+
   return (
     <div className="min-h-screen bg-[#171717]">
       {/* Navigation */}
@@ -78,30 +99,60 @@ export default async function AdvertiserDashboard() {
           <p className="mt-1 text-[#D9D9D9]/70">Welcome back, {profile?.full_name}</p>
         </div>
 
-        {/* Stats */}
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Total Applications</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">{applications?.length || 0}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Pending</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">
-                {applications?.filter((a: Application) => a.status === "pending").length || 0}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Accepted</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">
-                {applications?.filter((a: Application) => a.status === "accepted").length || 0}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+        {/* Performance Metrics */}
+        <div className="mb-10">
+          <h2 className="mb-4 text-xl font-semibold text-[#D9D9D9]">Performance Metrics</h2>
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Applications</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{totalApps}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Accepted</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{acceptedApps}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Pending</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{pendingApps}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Rejected</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{rejectedApps}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Acceptance Rate</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{acceptanceRate}%</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Avg Accepted Pay</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">${avgAcceptedCompensation}</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card className="border-[#D9D9D9]/20 bg-[#171717] md:col-span-2" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Unique Businesses</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{uniqueBusinesses}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717] md:col-span-4" style={{ borderRadius: "5px" }}>
+              <CardContent className="pt-6 text-sm text-[#D9D9D9]/70">
+                Improve acceptance by tailoring messages, keeping your profile complete, and applying to campaigns that match your location & availability.
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Applications List */}
