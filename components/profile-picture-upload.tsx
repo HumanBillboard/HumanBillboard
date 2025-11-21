@@ -58,8 +58,8 @@ export function ProfilePictureUpload({
     }
 
     // Validate file size
-    if (file.size > 5 * 1024 * 1024) {
-      setError("File must be smaller than 5MB")
+    if (file.size > 8 * 1024 * 1024) {
+      setError("File must be smaller than 8MB")
       return
     }
 
