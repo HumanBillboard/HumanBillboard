@@ -45,11 +45,28 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: R
     .order("created_at", { ascending: false })
     .returns<CampaignWithBusiness[]>()
 
+  // Determine which of these campaigns the current user already applied to
+  const campaignIds = Array.isArray(campaigns) ? campaigns.map((c: any) => c.id).filter(Boolean) : []
+  let appliedByCampaign: Record<string, string> = {}
+  if (campaignIds.length > 0) {
+    const { data: userApplications } = await supabase
+      .from("applications")
+      .select("campaign_id, status")
+      .in("campaign_id", campaignIds)
+      .eq("advertiser_id", userId)
+
+    if (Array.isArray(userApplications)) {
+      appliedByCampaign = userApplications.reduce((acc: Record<string, string>, a: any) => {
+        if (a && a.campaign_id) acc[String(a.campaign_id)] = a.status || "pending"
+        return acc
+      }, {})
+    }
+  }
+
   // Normalize filters
   const locationFilter = searchParams?.location ?? ""
   const merchandiseFilter = searchParams?.merchandise ?? ""
-  const genderFilter = searchParams?.gender ?? ""
-  const ageFilter = searchParams?.age_range ?? ""
+  // removed gender/age filters: campaigns don't use influencer gender/age criteria
   const minCompInput = searchParams?.min_comp ?? ""
   const maxCompInput = searchParams?.max_comp ?? ""
   const minComp = minCompInput !== "" ? Number(minCompInput) : undefined
@@ -71,25 +88,10 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: R
         const merchFields = ["merchandise_type", "merchandise_types", "items", "products"]
         const merchMatches = merchFields.some((k) => matchesFilter(c[k], merchandiseFilter))
 
-        // Influencer demographics
-        const demoFields = ["influencer_demographics", "target_demographics", "demographics"]
-        let genderMatches = true
-        let ageMatches = true
-        if (genderFilter || ageFilter) {
-          genderMatches = false
-          ageMatches = false
-          for (const k of demoFields) {
-            const val = c[k]
-            if (!val) continue
-            if (typeof val === "object") {
-              if (genderFilter && val.gender && String(val.gender).toLowerCase().includes(genderFilter.toLowerCase())) genderMatches = true
-              if (ageFilter && val.age_range && String(val.age_range).toLowerCase().includes(ageFilter.toLowerCase())) ageMatches = true
-            } else {
-              if (genderFilter && matchesFilter(val, genderFilter)) genderMatches = true
-              if (ageFilter && matchesFilter(val, ageFilter)) ageMatches = true
-            }
-          }
-        }
+
+        // We don't filter by influencer gender/age on this site; keep matches true
+        const genderMatches = true
+        const ageMatches = true
 
         // Compensation numeric filtering
         const compFields = ["compensation_amount", "compensation", "amount", "pay_amount", "budget"]
@@ -139,25 +141,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: R
               <label className="block mb-1 text-sm text-[#D9D9D9]">Max Compensation</label>
               <input name="max_comp" defaultValue={maxCompInput} placeholder="Max $" className="px-3 py-2 rounded bg-[#1f1f1f] text-[#D9D9D9]" />
             </div>
-            <div>
-              <label className="block mb-1 text-sm text-[#D9D9D9]">Influencer Gender</label>
-              <select name="gender" defaultValue={genderFilter} className="px-3 py-2 rounded bg-[#1f1f1f] text-[#D9D9D9]">
-                <option value="">Any</option>
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="non-binary">Non-binary</option>
-              </select>
-            </div>
-            <div>
-              <label className="block mb-1 text-sm text-[#D9D9D9]">Influencer Age Range</label>
-              <select name="age_range" defaultValue={ageFilter} className="px-3 py-2 rounded bg-[#1f1f1f] text-[#D9D9D9]">
-                <option value="">Any</option>
-                <option value="18-24">18-24</option>
-                <option value="25-34">25-34</option>
-                <option value="35-44">35-44</option>
-                <option value="45+">45+</option>
-              </select>
-            </div>
+            {/* removed gender/age filters - campaigns don't use these criteria */}
             <div>
               <Button type="submit" className="bg-[#8BFF61] text-[#171717]" style={{ borderRadius: 6 }}>
                 Apply
@@ -221,12 +205,19 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: R
                 </div>
 
                 <div className="flex gap-3">
-                  <Link href={`/advertiser/campaigns/${campaign.id}/apply`}>
-                    <Button className="bg-[#8BFF61] text-[#171717]" style={{ borderRadius: 6 }}>Apply</Button>
-                  </Link>
-                  <Link href={`/advertiser/campaigns/${campaign.id}`}>
-                    <Button variant="ghost" className="text-[#D9D9D9]">View</Button>
-                  </Link>
+                  {appliedByCampaign[String(campaign.id)] ? (
+                    <Button disabled variant="outline" className="text-[#D9D9D9]" style={{ borderRadius: 6 }}>
+                      {appliedByCampaign[String(campaign.id)] === "accepted"
+                        ? "Applied (Accepted)"
+                        : appliedByCampaign[String(campaign.id)] === "pending"
+                        ? "Applied (Pending)"
+                        : "Applied"}
+                    </Button>
+                  ) : (
+                    <Link href={`/advertiser/campaigns/${campaign.id}/apply`}>
+                      <Button className="bg-[#8BFF61] text-[#171717]" style={{ borderRadius: 6 }}>Apply</Button>
+                    </Link>
+                  )}
                 </div>
               </CardContent>
             </Card>
