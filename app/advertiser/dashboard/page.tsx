@@ -69,9 +69,10 @@ export default async function AdvertiserDashboard() {
   })()
 
   // Fetch campaigns from the DB (exclude the advertiser's own campaigns)
+  // include business info so we can show company name in the compact cards
   const { data: campaigns, error: campaignsError } = await supabase
     .from('campaigns')
-    .select('*')
+    .select(`*, business:user_profiles!campaigns_business_id_fkey(id, company_name, profile_picture_url)`)
     .order('created_at', { ascending: false })
     .limit(4);
   
@@ -88,6 +89,15 @@ export default async function AdvertiserDashboard() {
         return !presentKeys.some((k) => String(c[k]) === String(userId));
       })
     : [];
+
+  // Build map of campaigns the current user already applied to (from their applications)
+  const appliedByCampaign: Record<string, string> = {}
+  if (Array.isArray(applications)) {
+    for (const a of applications) {
+      const cid = a?.campaign?.id || a?.campaign_id
+      if (cid) appliedByCampaign[String(cid)] = a.status || "pending"
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#171717]">
@@ -118,6 +128,66 @@ export default async function AdvertiserDashboard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#D9D9D9]">Advertiser Dashboard</h1>
           <p className="mt-1 text-[#D9D9D9]/70">Welcome back, {profile?.full_name}</p>
+        </div>
+        {/* Campaigns (compact strip) */}
+        <div className="mb-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-[#D9D9D9]">Campaigns</h2>
+            <Link href="/advertiser/campaigns">
+              <Button className="bg-[#8BFF61] text-[#171717] hover:bg-[#8BFF61]/90" style={{ borderRadius: "5px" }}>
+                See More Campaigns
+              </Button>
+            </Link>
+          </div>
+
+          <div className="-mx-6 px-6">
+            <div className="flex gap-4 overflow-x-auto py-2">
+              {displayedCampaigns && displayedCampaigns.length > 0 ? (
+                displayedCampaigns.map((campaign: any) => (
+                  <Card
+                    key={campaign.id}
+                    className="border-[#D9D9D9]/20 bg-[#171717] flex-shrink-0"
+                    style={{ borderRadius: "5px", minWidth: 260 }}
+                  >
+                    <CardContent className="p-4">
+                      <div className="mb-2">
+                        <div className="text-sm text-[#D9D9D9]/70">{campaign.title}</div>
+                        <div className="text-sm font-semibold text-[#8BFF61]">
+                          <Link href={`/advertiser/profile/${campaign.business?.id}`} className="hover:underline">
+                            {campaign.business?.company_name || "Unknown Company"}
+                          </Link>
+                        </div>
+                      </div>
+                      <div className="text-xs text-[#D9D9D9]/70">
+                        {campaign.compensation_amount ? (
+                          <span className="block">${campaign.compensation_amount}/{campaign.compensation_type}</span>
+                        ) : null}
+                        {campaign.location ? <span className="block">{campaign.location}</span> : null}
+                      </div>
+
+                      <div className="mt-3">
+                        {appliedByCampaign[String(campaign.id)] ? (
+                          <Button disabled variant="outline" className="text-[#D9D9D9]" style={{ borderRadius: 6 }}>
+                            {appliedByCampaign[String(campaign.id)] === "accepted"
+                              ? "Applied (Accepted)"
+                              : appliedByCampaign[String(campaign.id)] === "pending"
+                              ? "Applied (Pending)"
+                              : "Applied"}
+                          </Button>
+                        ) : (
+                          <Link href={`/advertiser/campaigns/${campaign.id}/apply`}>
+                            <Button className="bg-[#8BFF61] text-[#171717]" style={{ borderRadius: 6 }}>Apply</Button>
+                          </Link>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-sm text-[#D9D9D9]/70">No sample campaigns to show.</div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Performance Metrics */}
@@ -267,76 +337,7 @@ export default async function AdvertiserDashboard() {
           )}
         </div>
 
-        {/* Campaigns - show any campaigns that aren't the user's (client-side filtered when possible) */}
-        <div className="mt-12">
-          {/* Debug helper: show error or raw payload when no campaigns found */}
-          {(!displayedCampaigns || displayedCampaigns.length === 0) && (
-            <Card className="border-[#D9D9D9]/20 bg-[#171717] mb-6" style={{ borderRadius: "5px" }}>
-              <CardContent className="py-4">
-                <p className="mb-2 text-[#D9D9D9]/70">Debug: no campaigns to display after client-side filtering.</p>
-                {campaignsError && <p className="mb-2 text-sm text-red-400">Error: {campaignsError.message}</p>}
-                <pre className="text-xs text-[#D9D9D9]/70 whitespace-pre-wrap">{JSON.stringify(campaigns ?? null, null, 2)}</pre>
-              </CardContent>
-            </Card>
-          )}
-
-           <div className="mb-4 flex items-center justify-start">
-             <h2 className="text-2xl font-bold text-[#D9D9D9]">Campaigns</h2>
-           </div>
-
-          {displayedCampaigns && displayedCampaigns.length > 0 ? (
-            <div className="space-y-4">
-              {displayedCampaigns.map((campaign: any) => (
-                <Card key={campaign.id} className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="mb-2 flex items-center gap-2">
-                          <CardTitle className="text-[#D9D9D9]">{campaign.title}</CardTitle>
-                        </div>
-                        <CardDescription className="text-[#D9D9D9]/70">{campaign.summary || campaign.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="mb-4 flex flex-wrap gap-4 text-sm text-[#D9D9D9]/70">
-                      {campaign.compensation_amount && (
-                        <div>
-                          <span className="font-semibold text-[#D9D9D9]">Compensation:</span> ${campaign.compensation_amount}/{campaign.compensation_type}
-                        </div>
-                      )}
-                      {campaign.location && (
-                        <div>
-                          <span className="font-semibold text-[#D9D9D9]">Location:</span> {campaign.location}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-sm text-[#D9D9D9]/70">Posted recently</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-              <CardContent className="py-12 text-center">
-                <p className="mb-4 text-[#D9D9D9]/70">No campaigns at the moment.</p>
-                <Link href="/advertiser/campaigns">
-                  <Button className="bg-[#8BFF61] text-[#171717] hover:bg-[#8BFF61]/90" style={{ borderRadius: "5px" }}>
-                    Browse Available Campaigns
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="mt-6 flex justify-center">
-            <Link href="/advertiser/campaigns">
-              <Button className="bg-[#8BFF61] text-[#171717] hover:bg-[#8BFF61]/90 px-8" style={{ borderRadius: "6px" }}>
-                See More Campaigns
-              </Button>
-            </Link>
-          </div>
-        </div>
+        {/* removed duplicate bottom campaigns section - campaigns moved to top */}
       </div>
     </div>
   )
