@@ -1,8 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
-// Static video served from public/media folder (fast start)
-const heroVideoSrc = "/media/video.mp4"
 import { Button } from "@/components/ui/button"
+import { HeroVideo } from "@/components/hero-video"
 import {
   Card,
   CardContent,
@@ -11,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-// Removed VideoPlaylist in favor of single looping video
 
 export default function HomePage() {
   return (
@@ -66,17 +64,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="relative">
-            <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/40">
-              <video
-                src={heroVideoSrc}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="h-[420px] w-full object-cover md:h-[520px]"
-                poster="/placeholder.svg?height=560&width=720"
-              />
-            </div>
+            <HeroVideo />
           </div>
         </div>
       </section>
