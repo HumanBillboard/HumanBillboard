@@ -38,6 +38,13 @@ export default async function ApplicationsPage({ params }: { params: Promise<{ i
     .eq("campaign_id", id)
     .order("created_at", { ascending: false })
 
+  // Derived metrics
+  const totalApplications = applications?.length || 0
+  const acceptedCount = applications?.filter(a => a.status === "accepted").length || 0
+  const pendingCount = applications?.filter(a => a.status === "pending").length || 0
+  const rejectedCount = applications?.filter(a => a.status === "rejected").length || 0
+  const acceptanceRate = totalApplications > 0 ? (acceptedCount / totalApplications) * 100 : 0
+
   return (
     <div className="min-h-screen bg-[#171717]">
       {/* Navigation */}
@@ -60,6 +67,46 @@ export default async function ApplicationsPage({ params }: { params: Promise<{ i
           <h1 className="mb-2 text-3xl font-bold text-[#D9D9D9]">{campaign.title}</h1>
           <p className="text-[#D9D9D9]/70">{campaign.description}</p>
         </div>
+
+        {/* Metrics */}
+        <Card className="mb-8 border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+          <CardHeader>
+            <CardTitle className="text-[#D9D9D9]">Campaign Metrics</CardTitle>
+            <CardDescription className="text-[#D9D9D9]/70">Live performance for this campaign</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Total Applications</p>
+                <p className="text-2xl font-bold text-[#D9D9D9]">{totalApplications}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Accepted</p>
+                <p className="text-2xl font-bold text-[#8BFF61]">{acceptedCount}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Pending</p>
+                <p className="text-2xl font-bold text-[#D9D9D9]">{pendingCount}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Rejected</p>
+                <p className="text-2xl font-bold text-red-400">{rejectedCount}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Acceptance Rate</p>
+                <p className="text-2xl font-bold text-[#D9D9D9]">{acceptanceRate.toFixed(1)}%</p>
+              </div>
+              {campaign.compensation_amount && (
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-[#D9D9D9]/50">Compensation</p>
+                  <p className="text-2xl font-bold text-[#D9D9D9]">
+                    ${campaign.compensation_amount}/{campaign.compensation_type}
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Applications */}
         <div>
