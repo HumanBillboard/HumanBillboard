@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import type { UserProfile } from "@/lib/types"
 
-export default async function PublicAdvertiserProfilePage({ params }: { params: { id: string } }) {
+export default async function PublicAdvertiserProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth()
+  const { id } = await params
 
   if (!userId) {
     redirect("/auth/login")
@@ -31,7 +32,7 @@ export default async function PublicAdvertiserProfilePage({ params }: { params: 
   const { data: advertiser } = await supabase
     .from("user_profiles")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_type", "advertiser")
     .single()
 
@@ -43,7 +44,7 @@ export default async function PublicAdvertiserProfilePage({ params }: { params: 
   const { data: applications } = await supabase
     .from("applications")
     .select("status")
-    .eq("advertiser_id", params.id)
+    .eq("advertiser_id", id)
 
   const completed = applications?.filter((app) => app.status === "accepted").length || 0
   const inProgress = applications?.filter((app) => app.status === "pending").length || 0

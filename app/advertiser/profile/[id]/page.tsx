@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import type { UserProfile } from "@/lib/types"
 
-export default async function PublicBusinessProfilePage({ params }: { params: { id: string } }) {
+export default async function PublicBusinessProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { userId } = await auth()
+  const { id } = await params
 
   if (!userId) {
     redirect("/auth/login")
@@ -31,7 +32,7 @@ export default async function PublicBusinessProfilePage({ params }: { params: { 
   const { data: business } = await supabase
     .from("user_profiles")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_type", "business")
     .single()
 
@@ -43,7 +44,7 @@ export default async function PublicBusinessProfilePage({ params }: { params: { 
   const { data: campaigns } = await supabase
     .from("campaigns")
     .select("id")
-    .eq("business_id", params.id)
+    .eq("business_id", id)
     .eq("status", "active")
 
   const activeCampaignCount = campaigns?.length || 0
