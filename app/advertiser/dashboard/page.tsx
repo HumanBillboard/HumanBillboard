@@ -1,11 +1,18 @@
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
+import ClerkSignOut from "@/components/clerk-signout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import type { Application } from "@/lib/types"
+import type { Application, Campaign, UserProfile } from "@/lib/types"
+
+interface ApplicationWithCampaignAndBusiness extends Application {
+  campaign: Campaign & {
+    business: Pick<UserProfile, "id" | "company_name"> | null
+  }
+}
 
 // async function to render the advertiser dashboard page
 export default async function AdvertiserDashboard() {
@@ -16,7 +23,7 @@ export default async function AdvertiserDashboard() {
   }
 
   // Create Supabase client, works better for serverless environments
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Fetch user profile from Supabase
   const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", userId).single()
@@ -29,15 +36,37 @@ export default async function AdvertiserDashboard() {
     redirect("/business/dashboard")
   }
 
-  // Get user's applications
+  // Get user's applications with campaign and business info
   const { data: applications } = await supabase
     .from("applications")
     .select(`
       *,
-      campaign:campaigns(*)
+      campaign:campaigns(*, business:user_profiles!campaigns_business_id_fkey(id, company_name))
     `)
     .eq("advertiser_id", userId)
     .order("created_at", { ascending: false })
+    .returns<ApplicationWithCampaignAndBusiness[]>()
+
+  // Derived performance metrics for advertiser
+  const totalApps = applications?.length || 0
+  const acceptedApps = applications?.filter((a) => a.status === "accepted").length || 0
+  const pendingApps = applications?.filter((a) => a.status === "pending").length || 0
+  const rejectedApps = applications?.filter((a) => a.status === "rejected").length || 0
+  const acceptanceRate = totalApps ? Math.round((acceptedApps / totalApps) * 100) : 0
+  const uniqueBusinesses = applications
+    ? new Set(applications.map((a) => a.campaign?.business?.id).filter(Boolean)).size
+    : 0
+  const avgAcceptedCompensation = (() => {
+    if (!applications || !acceptedApps) return 0
+    const accepted = applications.filter(
+      (a) => a.status === "accepted" && a.campaign?.compensation_amount
+    )
+    if (!accepted.length) return 0
+    return Math.round(
+      accepted.reduce((sum, a) => sum + (a.campaign!.compensation_amount || 0), 0) /
+        accepted.length
+    )
+  })()
 
   // Fetch campaigns from the DB (exclude the advertiser's own campaigns)
   const { data: campaigns, error: campaignsError } = await supabase
@@ -74,16 +103,12 @@ export default async function AdvertiserDashboard() {
                 Browse Campaigns
               </Button>
             </Link>
-            <form action="/auth/logout" method="POST">
-              <Button
-                type="submit"
-                variant="ghost"
-                className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10"
-                style={{ borderRadius: "5px" }}
-              >
-                Sign out
+            <Link href="/advertiser/profile">
+              <Button variant="ghost" className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10" style={{ borderRadius: "5px" }}>
+                My Profile
               </Button>
-            </form>
+            </Link>
+            <ClerkSignOut />
           </div>
         </div>
       </nav>
@@ -95,30 +120,60 @@ export default async function AdvertiserDashboard() {
           <p className="mt-1 text-[#D9D9D9]/70">Welcome back, {profile?.full_name}</p>
         </div>
 
-        {/* Stats */}
-        <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Total Applications</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">{applications?.length || 0}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Pending</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">
-                {applications?.filter((a: Application) => a.status === "pending").length || 0}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-            <CardHeader>
-              <CardDescription className="text-[#D9D9D9]/70">Accepted</CardDescription>
-              <CardTitle className="text-3xl text-[#8BFF61]">
-                {applications?.filter((a: Application) => a.status === "accepted").length || 0}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+        {/* Performance Metrics */}
+        <div className="mb-10">
+          <h2 className="mb-4 text-xl font-semibold text-[#D9D9D9]">Performance Metrics</h2>
+          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Applications</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{totalApps}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Accepted</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{acceptedApps}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Pending</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{pendingApps}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Rejected</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{rejectedApps}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Acceptance Rate</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{acceptanceRate}%</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Avg Accepted Pay</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">${avgAcceptedCompensation}</CardTitle>
+              </CardHeader>
+            </Card>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card className="border-[#D9D9D9]/20 bg-[#171717] md:col-span-2" style={{ borderRadius: "5px" }}>
+              <CardHeader>
+                <CardDescription className="text-[#D9D9D9]/70">Unique Businesses</CardDescription>
+                <CardTitle className="text-2xl text-[#8BFF61]">{uniqueBusinesses}</CardTitle>
+              </CardHeader>
+            </Card>
+            <Card className="border-[#D9D9D9]/20 bg-[#171717] md:col-span-4" style={{ borderRadius: "5px" }}>
+              <CardContent className="pt-6 text-sm text-[#D9D9D9]/70">
+                Improve acceptance by tailoring messages, keeping your profile complete, and applying to campaigns that match your location & availability.
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         {/* Applications List */}
@@ -167,6 +222,15 @@ export default async function AdvertiserDashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="mb-4 flex flex-wrap gap-4 text-sm text-[#D9D9D9]/70">
+                        <div>
+                          <span className="font-semibold text-[#D9D9D9]">Company:</span>{" "}
+                          <Link
+                            href={`/advertiser/profile/${(application as ApplicationWithCampaignAndBusiness)?.campaign?.business?.id}`}
+                            className="text-[#8BFF61] hover:underline"
+                          >
+                            {(application as ApplicationWithCampaignAndBusiness)?.campaign?.business?.company_name || "Unknown"}
+                          </Link>
+                        </div>
                         <div>
                           <span className="font-semibold text-[#D9D9D9]">Compensation:</span> $
                           {campaign?.compensation_amount}/{campaign?.compensation_type}

@@ -1,17 +1,25 @@
 import { auth } from "@clerk/nextjs/server"
-import { createClient } from "@/lib/supabase/client"
-import Link from "next/link"
+import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import ClerkSignOut from "@/components/clerk-signout"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
+import { ProfileAvatar } from "@/components/profile-avatar"
+import type { Campaign, UserProfile } from "@/lib/types"
 
-type SearchParams = {
-  location?: string;
-  merchandise?: string;
-  gender?: string;
-  age_range?: string;
-  min_comp?: string;
-  max_comp?: string;
+interface CampaignWithBusiness extends Campaign {
+  business: Pick<UserProfile, "id" | "company_name" | "profile_picture_url"> | null
 }
+
+export default async function BrowseCampaignsPage() {
+  const { userId } = await auth()
+  
+  if (!userId) {
+    redirect("/auth/login")
+  }
+
+  const supabase = await createClient()
 
 function matchesFilter(value: any, filter?: string) {
   if (!filter) return true
@@ -31,12 +39,16 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: S
   const { userId } = await auth()
   const supabase = createClient()
 
-  // Pull campaigns (limit to 100 for now)
-  const { data: campaigns, error } = await supabase
+  // Get all active campaigns with business info
+  const { data: campaigns } = await supabase
     .from("campaigns")
-    .select("*")
+    .select(`
+      *,
+      business:user_profiles!campaigns_business_id_fkey(id, company_name, profile_picture_url)
+    `)
+    .eq("status", "active")
     .order("created_at", { ascending: false })
-    .limit(100)
+    .returns<CampaignWithBusiness[]>()
 
   // Normalize filters
   const locationFilter = searchParams?.location ?? ""
@@ -110,6 +122,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: S
                 Dashboard
               </Button>
             </Link>
+            <ClerkSignOut />
           </div>
         </div>
       </nav>
@@ -170,20 +183,46 @@ export default async function CampaignsPage({ searchParams }: { searchParams?: S
                     <div className="mb-2 flex items-center gap-2">
                       <CardTitle className="text-[#D9D9D9]">{campaign.title}</CardTitle>
                     </div>
-                    <CardDescription className="text-[#D9D9D9]/70">{campaign.summary || campaign.description}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="mb-4 flex flex-wrap gap-4 text-sm text-[#D9D9D9]/70">
-                  {campaign.compensation_amount && (
-                    <div>
-                      <span className="font-semibold text-[#D9D9D9]">Compensation:</span> ${campaign.compensation_amount}/{campaign.compensation_type}
+                    <CardDescription className="text-[#D9D9D9]/70">{campaign.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4 flex items-center gap-3 pb-3 border-b border-[#D9D9D9]/20">
+                      <ProfileAvatar
+                        src={(campaign as CampaignWithBusiness).business?.profile_picture_url || null}
+                        alt={(campaign as CampaignWithBusiness).business?.company_name || "Business"}
+                        fallback={
+                          (campaign as CampaignWithBusiness).business?.company_name
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase() || "B"
+                        }
+                        size="sm"
+                      />
+                      <Link
+                        href={`/advertiser/profile/${(campaign as CampaignWithBusiness).business?.id}`}
+                        className="text-sm font-semibold text-[#8BFF61] hover:underline"
+                      >
+                        {(campaign as CampaignWithBusiness).business?.company_name || "Unknown"}
+                      </Link>
                     </div>
-                  )}
-                  {campaign.location && (
-                    <div>
-                      <span className="font-semibold text-[#D9D9D9]">Location:</span> {campaign.location}
+                    <div className="mb-4 space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#D9D9D9]/70">Compensation</span>
+                        <span className="font-semibold text-[#8BFF61]">
+                          ${campaign.compensation_amount}/{campaign.compensation_type}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#D9D9D9]/70">Location</span>
+                        <span className="text-[#D9D9D9]">{campaign.location}</span>
+                      </div>
+                      {campaign.duration_hours && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#D9D9D9]/70">Duration</span>
+                          <span className="text-[#D9D9D9]">{campaign.duration_hours} hours</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { sendApplicationStatusNotification } from "@/app/actions/send-notification-emails"
 
 interface ApplicationActionsProps {
   applicationId: string
@@ -18,9 +19,24 @@ export default function ApplicationActions({ applicationId }: ApplicationActions
     const supabase = createClient()
 
     try {
+      // Get application and related data before updating
+      const { data: application } = await supabase.from("applications").select("*, campaign:campaigns(*, business:user_profiles!campaigns_business_id_fkey(company_name, full_name)), advertiser:user_profiles!applications_advertiser_id_fkey(email, full_name)").eq("id", applicationId).single()
+
+      // Update application status
       const { error } = await supabase.from("applications").update({ status }).eq("id", applicationId)
 
       if (error) throw error
+
+      // Send email notification to advertiser
+      if (application?.advertiser && application?.campaign && application?.campaign?.business) {
+        await sendApplicationStatusNotification(
+          application.advertiser.email || "",
+          application.advertiser.full_name || "Advertiser",
+          application.campaign.title,
+          application.campaign.business.company_name || application.campaign.business.full_name || "Business",
+          status
+        )
+      }
 
       router.refresh()
     } catch (error) {

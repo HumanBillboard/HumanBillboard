@@ -1,213 +1,251 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { HeroVideo } from "@/components/hero-video"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#171717]">
-      {/* Navigation */}
-      <nav className="border-b border-[#D9D9D9]/20">
+    <div className="min-h-screen bg-[#0f0f0f]">
+      {/* Top Nav */}
+      <nav className="sticky top-0 z-30 border-b border-[#D9D9D9]/15 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="text-2xl font-bold text-[#D9D9D9]">
+          <Link href="/" className="text-xl font-semibold text-[#D9D9D9]">
             Human<span className="text-[#8BFF61]">Billboard</span>
+          </Link>
+          <div className="hidden items-center gap-6 text-sm text-[#D9D9D9]/80 md:flex">
+            <Link href="/advertiser/campaigns">Campaigns</Link>
+            <Link href="/business/dashboard">Businesses</Link>
+            <Link href="#how">How it works</Link>
+            <Link href="#resources">Resources</Link>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <Link href="/auth/login">
-              <Button
-                variant="ghost"
-                className="text-[#D9D9D9] hover:bg-[#D9D9D9]/10 hover:text-[#D9D9D9]"
-                style={{ borderRadius: "5px" }}
-              >
-                Sign in
-              </Button>
+              <Button variant="ghost" className="text-[#D9D9D9] hover:bg-white/5">Sign in</Button>
             </Link>
             <Link href="/auth/signup">
-              <Button className="bg-[#8BFF61] text-[#171717] hover:bg-[#8BFF61]/90" style={{ borderRadius: "5px" }}>
-                Get started
-              </Button>
+              <Button className="bg-[#8BFF61] text-[#0f0f0f] hover:bg-[#8BFF61]/90">Get started</Button>
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section with Video Background */}
-      <section className="relative overflow-hidden">
-        {/* Video Background */}
-        <div className="absolute inset-0 z-0">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="h-full w-full object-cover opacity-30"
-            poster="/people-wearing-branded-merchandise-in-urban-settin.jpg"
-          >
-            <source src="/hero-video.mp4" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-[#171717]/50 via-[#171717]/70 to-[#171717]" />
-        </div>
-
-        {/* Hero Content */}
-        <div className="relative z-10 mx-auto max-w-7xl px-6 py-24 md:py-32 lg:py-40">
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className="mb-6 text-balance text-5xl font-bold leading-tight text-[#D9D9D9] md:text-6xl lg:text-7xl">
-              Turn People Into <span className="text-[#8BFF61]">Walking Billboards</span>
+      {/* Hero - left copy, right media */}
+      <section className="border-b border-[#D9D9D9]/10">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-14 md:grid-cols-2 md:py-20">
+          <div>
+            <p className="mb-3 text-xs uppercase tracking-widest text-[#D9D9D9]/60">Platform</p>
+            <h1 className="text-balance text-4xl font-bold leading-tight text-[#D9D9D9] sm:text-5xl lg:text-6xl">
+              The center for human advertising
             </h1>
-            <p className="mb-8 text-pretty text-xl leading-relaxed text-[#D9D9D9]/80 md:text-2xl">
-              Connect businesses with brand ambassadors. Get paid to wear merchandise in public, or hire people to
-              promote your brand in the real world.
+            <p className="mt-5 max-w-xl text-pretty text-lg leading-relaxed text-[#D9D9D9]/80">
+              Get paid to wear local brands and help them reach real people
+              through everyday moments. Businesses create campaigns, people
+              apply, then show up — simple.
             </p>
-
-            {/* Dual CTAs */}
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/auth/signup?type=advertiser" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className="w-full bg-[#8BFF61] text-[#171717] hover:bg-[#8BFF61]/90 sm:w-auto"
-                  style={{ borderRadius: "5px" }}
-                >
-                  Start earning money
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/auth/signup?type=advertiser">
+                <Button size="lg" className="bg-[#8BFF61] text-[#0f0f0f] hover:bg-[#8BFF61]/90">
+                  Start earning
                 </Button>
               </Link>
-              <Link href="/auth/signup?type=business" className="w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full border-[#D9D9D9] text-[#D9D9D9] hover:bg-[#D9D9D9]/10 sm:w-auto bg-transparent"
-                  style={{ borderRadius: "5px" }}
-                >
-                  Hire brand ambassadors
+              <Link href="/auth/signup?type=business">
+                <Button size="lg" variant="outline" className="border-white/20 text-[#D9D9D9]">
+                  Create a campaign
                 </Button>
               </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="border-t border-[#D9D9D9]/20 bg-[#171717] py-20">
-        <div className="mx-auto max-w-7xl px-6">
-          <h2 className="mb-12 text-center text-4xl font-bold text-[#D9D9D9]">How It Works</h2>
-
-          <div className="grid gap-8 md:grid-cols-2">
-            {/* For Advertisers */}
-            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-              <CardContent className="p-8">
-                <h3 className="mb-6 text-2xl font-bold text-[#8BFF61]">For Advertisers</h3>
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8BFF61] text-[#171717] font-bold">
-                      1
-                    </div>
-                    <div>
-                      <h4 className="mb-1 font-semibold text-[#D9D9D9]">Browse Campaigns</h4>
-                      <p className="text-[#D9D9D9]/70">Find opportunities that match your location and schedule</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8BFF61] text-[#171717] font-bold">
-                      2
-                    </div>
-                    <div>
-                      <h4 className="mb-1 font-semibold text-[#D9D9D9]">Apply to Campaigns</h4>
-                      <p className="text-[#D9D9D9]/70">Submit your application with a brief message</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8BFF61] text-[#171717] font-bold">
-                      3
-                    </div>
-                    <div>
-                      <h4 className="mb-1 font-semibold text-[#D9D9D9]">Get Accepted & Earn</h4>
-                      <p className="text-[#D9D9D9]/70">Wear the merchandise and get paid for your time</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* For Businesses */}
-            <Card className="border-[#D9D9D9]/20 bg-[#171717]" style={{ borderRadius: "5px" }}>
-              <CardContent className="p-8">
-                <h3 className="mb-6 text-2xl font-bold text-[#8BFF61]">For Businesses</h3>
-                <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8BFF61] text-[#171717] font-bold">
-                      1
-                    </div>
-                    <div>
-                      <h4 className="mb-1 font-semibold text-[#D9D9D9]">Create a Campaign</h4>
-                      <p className="text-[#D9D9D9]/70">Post your opportunity with details and compensation</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8BFF61] text-[#171717] font-bold">
-                      2
-                    </div>
-                    <div>
-                      <h4 className="mb-1 font-semibold text-[#D9D9D9]">Review Applications</h4>
-                      <p className="text-[#D9D9D9]/70">Browse applicants and select the best brand ambassadors</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8BFF61] text-[#171717] font-bold">
-                      3
-                    </div>
-                    <div>
-                      <h4 className="mb-1 font-semibold text-[#D9D9D9]">Grow Your Brand</h4>
-                      <p className="text-[#D9D9D9]/70">Get real-world visibility with human billboards</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="relative">
+            <HeroVideo />
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="border-t border-[#D9D9D9]/20 bg-[#171717] py-20">
+      {/* Features */}
+      <section id="how" className="border-b border-[#D9D9D9]/10 py-16">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="grid gap-8 md:grid-cols-3">
-            <div className="text-center">
-              <div className="mb-2 text-5xl font-bold text-[#8BFF61]">$15-50</div>
-              <div className="text-[#D9D9D9]/70">Average hourly rate</div>
+          <div className="mx-auto max-w-xl text-center">
+            <p className="mb-2 text-xs uppercase tracking-widest text-[#D9D9D9]/60">Features</p>
+            <h2 className="text-2xl font-semibold text-[#D9D9D9]">Advertising reimagined</h2>
+            <p className="mt-2 text-sm text-[#D9D9D9]/70">Smart options connecting businesses with local brand ambassadors.</p>
+          </div>
+
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {[{
+              title: "Boost local brand awareness",
+              desc: "Hire nearby ambassadors to walk your message into community hubs.",
+              img: "/media/1.png",
+            },{
+              title: "Cost-effective marketing solution",
+              desc: "Pay for presence, not impressions. Control budgets and timelines.",
+              img: "/media/2.png",
+            },{
+              title: "Build genuine connections",
+              desc: "Create memorable interactions with real people in real places.",
+              img: "/media/3.png",
+            }].map((f, i) => (
+              <Card key={i} className="border-white/10 bg-[#121212]">
+                <CardHeader className="gap-4">
+                  <div className="overflow-hidden rounded-md border border-white/10">
+                    <Image
+                      src={f.img}
+                      alt={f.title}
+                      width={480}
+                      height={180}
+                      className="h-40 w-full object-cover"
+                    />
+                  </div>
+                  <CardTitle className="text-[#D9D9D9]">{f.title}</CardTitle>
+                  <CardDescription className="text-[#D9D9D9]/70">{f.desc}</CardDescription>
+                </CardHeader>
+                <CardFooter className="pt-0">
+                  <div className="flex w-full items-center justify-between text-xs text-[#D9D9D9]/60">
+                    <span className="hover:text-[#D9D9D9] transition">Explore →</span>
+                    <span className="hover:text-[#D9D9D9] transition">Learn more →</span>
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Value prop split */}
+      <section className="border-b border-[#D9D9D9]/10 py-16">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 md:grid-cols-2">
+          <div>
+            <p className="mb-2 text-xs uppercase tracking-widest text-[#D9D9D9]/60">For talents</p>
+            <h3 className="text-2xl font-semibold text-[#D9D9D9]">Transform your everyday look into marketing magic</h3>
+            <p className="mt-3 text-[#D9D9D9]/75">
+              Match with local brands and earn money simply by being out and
+              about. Choose shifts, wear the merch, and make an impact.
+            </p>
+            <ul className="mt-6 space-y-3 text-sm text-[#D9D9D9]">
+              <li className="flex items-start gap-2"><span className="mt-[6px] size-1.5 rounded-full bg-[#8BFF61]"/><span>Pick campaigns that fit your schedule and area.</span></li>
+              <li className="flex items-start gap-2"><span className="mt-[6px] size-1.5 rounded-full bg-[#8BFF61]"/><span>Simple check-ins prove presence — no awkward selling.</span></li>
+              <li className="flex items-start gap-2"><span className="mt-[6px] size-1.5 rounded-full bg-[#8BFF61]"/><span>Get paid quickly and transparently for your time.</span></li>
+            </ul>
+            <div className="mt-6 flex gap-3">
+              <Link href="/auth/signup?type=advertiser"><Button>Become an ambassador</Button></Link>
+              <Link href="/advertiser/campaigns"><Button variant="outline" className="border-white/20 text-[#D9D9D9]">Browse campaigns</Button></Link>
             </div>
-            <div className="text-center">
-              <div className="mb-2 text-5xl font-bold text-[#8BFF61]">100%</div>
-              <div className="text-[#D9D9D9]/70">Real-world visibility</div>
-            </div>
-            <div className="text-center">
-              <div className="mb-2 text-5xl font-bold text-[#8BFF61]">24/7</div>
-              <div className="text-[#D9D9D9]/70">Campaign management</div>
+          </div>
+          <div className="relative">
+            <div className="overflow-hidden rounded-xl border border-white/10">
+              <Image src="/media/4.png" alt="Ambassador participant" width={640} height={520} className="h-full w-full object-cover" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="border-t border-[#D9D9D9]/20 bg-[#171717] py-20">
-        <div className="mx-auto max-w-4xl px-6 text-center">
-          <h2 className="mb-6 text-balance text-4xl font-bold text-[#D9D9D9]">Ready to Get Started?</h2>
-          <p className="mb-8 text-pretty text-xl text-[#D9D9D9]/80">
-            Join the marketplace connecting brands with people. Start earning or hiring today.
+      {/* About + hero image */}
+      <section className="border-b border-[#D9D9D9]/10 py-16">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <p className="mb-2 text-xs uppercase tracking-widest text-[#D9D9D9]/60">About</p>
+          <h3 className="text-2xl font-semibold text-[#D9D9D9]">Connecting brands with real people</h3>
+          <p className="mt-2 text-sm text-[#D9D9D9]/70">
+            HumanBillboard transforms traditional advertising by creating direct connections between
+            businesses and community members.
           </p>
-          <Link href="/auth/signup">
-            <Button
-              size="lg"
-              className="bg-[#8BFF61] text-[#171717] hover:bg-[#8BFF61]/90"
-              style={{ borderRadius: "5px" }}
-            >
-              Create your free account
-            </Button>
-          </Link>
+          <div className="mt-6 flex items-center justify-center gap-6 text-xs text-[#D9D9D9]/60">
+            <span className="hover:text-[#D9D9D9] transition">About us</span>
+            <span className="hover:text-[#D9D9D9] transition">Our mission</span>
+          </div>
+        </div>
+        <div className="mx-auto mt-10 max-w-7xl px-6">
+          <div className="overflow-hidden rounded-xl border border-white/10">
+            <Image src="/media/5.png" alt="Community brand connection" width={1280} height={560} className="h-auto w-full object-cover" />
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonial slice */}
+      <section className="border-b border-[#D9D9D9]/10 py-16">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-6 md:grid-cols-[280px_1fr]">
+          <div className="overflow-hidden rounded-xl border border-white/10">
+            <Image src="/media/1.png" alt="Testimonial person" width={280} height={260} className="h-full w-full object-cover" />
+          </div>
+          <Card className="border-white/10 bg-[#121212]">
+            <CardContent className="py-6">
+              <div className="flex items-center gap-2 text-[#8BFF61]">
+                <span>★★★★★</span>
+              </div>
+              <p className="mt-2 text-sm text-[#D9D9D9]/80">
+                “This platform changed how we reach our local customers. It’s authentic and
+                effective.”
+              </p>
+              <p className="mt-3 text-xs text-[#D9D9D9]/60">Sarah Martinez — Owner, Local Coffee House</p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-16">
+        <div className="mx-auto max-w-2xl px-6 text-center">
+          <h3 className="text-2xl font-semibold text-[#D9D9D9]">Ready to start advertising differently</h3>
+          <p className="mt-2 text-sm text-[#D9D9D9]/70">
+            Join our community of brand ambassadors and local businesses creating meaningful connections.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Link href="/auth/signup?type=business"><Button className="bg-[#8BFF61] text-[#0f0f0f] hover:bg-[#8BFF61]/90">Create campaign</Button></Link>
+            <Link href="/auth/signup?type=advertiser"><Button variant="outline" className="border-white/20 text-[#D9D9D9]">Join as talent</Button></Link>
+          </div>
+        </div>
+        <div className="mx-auto mt-10 max-w-5xl px-6">
+          <div className="overflow-hidden rounded-xl border border-white/10">
+            <Image src="/media/2.png" alt="Brand showcase" width={1024} height={520} className="h-auto w-full object-cover" />
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#D9D9D9]/20 bg-[#171717] py-8">
-        <div className="mx-auto max-w-7xl px-6 text-center text-[#D9D9D9]/70">
-          <p>&copy; 2025 HumanBillboard. All rights reserved.</p>
+      <footer className="border-t border-white/10 py-12">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-10 px-6 text-sm text-[#D9D9D9]/70 md:grid-cols-5">
+          <div className="col-span-2 md:col-span-1">
+            <div className="text-lg font-semibold text-[#D9D9D9]">Human<span className="text-[#8BFF61]">Billboard</span></div>
+            <p className="mt-2 text-xs">© {new Date().getFullYear()} All rights reserved.</p>
+          </div>
+          <div>
+            <div className="mb-3 text-[#D9D9D9]">Platform</div>
+            <ul className="space-y-2">
+              <li><Link href="/advertiser/campaigns" className="hover:text-[#D9D9D9]">Campaigns</Link></li>
+              <li><Link href="/business/dashboard" className="hover:text-[#D9D9D9]">For businesses</Link></li>
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Pricing</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="mb-3 text-[#D9D9D9]">About</div>
+            <ul className="space-y-2">
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Our mission</Link></li>
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Careers</Link></li>
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Contact</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="mb-3 text-[#D9D9D9]">Resources</div>
+            <ul className="space-y-2">
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Guides</Link></li>
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Support</Link></li>
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Community</Link></li>
+            </ul>
+          </div>
+          <div>
+            <div className="mb-3 text-[#D9D9D9]">Legal</div>
+            <ul className="space-y-2">
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Terms</Link></li>
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Privacy</Link></li>
+              <li><Link href="#" className="hover:text-[#D9D9D9]">Cookies</Link></li>
+            </ul>
+          </div>
         </div>
       </footer>
     </div>
