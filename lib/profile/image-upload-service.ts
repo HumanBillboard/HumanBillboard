@@ -1,7 +1,15 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
 import { auth } from "@clerk/nextjs/server"
+import { createClient as createSupabaseJsClient } from "@supabase/supabase-js"
+
+// Use server-only service role client for storage and DB updates under RLS
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!SERVICE_ROLE_KEY) {
+  console.warn("SUPABASE_SERVICE_ROLE_KEY is not set — image upload will fail when RLS is enabled")
+}
 
 /**
  * ImageUploadService - Server-side image upload handler
@@ -12,7 +20,10 @@ import { auth } from "@clerk/nextjs/server"
  */
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
-const MAX_FILE_SIZE = 8 * 1024 * 1024 // 8MB (leaving buffer below 10MB server limit)
+const MAX_FILE_SIZE = 8 * 1024 * 1024 // 8MB
+
+// Correct bucket name (underscore). Keep consistent across uploads/deletes.
+const BUCKET = "profile_pictures"
 
 /**
  * Upload profile picture
@@ -34,20 +45,21 @@ export async function uploadProfilePicture(
 
   // Validate file size
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error("File is too large. Maximum size is 5MB.")
+    throw new Error("File is too large. Maximum size is 8MB.")
   }
 
   try {
-    const supabase = await createClient()
+    // Use service-role client so this server code can update the DB even with RLS
+    const supabase = createSupabaseJsClient(SUPABASE_URL, SERVICE_ROLE_KEY!)
 
-    // Create unique file name
-    const fileName = `${userId}-${Date.now()}-${file.name.replace(/\s+/g, "-")}`
-    const filePath = `profile-pictures/${fileName}`
+    // Create unique file name and path (store path without bucket)
+    const safeName = file.name.replace(/\s+/g, "-")
+    const filePath = `${userId}/${Date.now()}-${safeName}`
 
-    // Upload file to Supabase storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from("profile-pictures")
-      .upload(filePath, file, {
+    // Upload file to Supabase storage (bucket name has underscore)
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(filePath, file as unknown as File, {
         cacheControl: "3600",
         upsert: true,
       })
@@ -56,26 +68,42 @@ export async function uploadProfilePicture(
       throw new Error(`Upload failed: ${uploadError.message}`)
     }
 
-    // Get public URL
-    const { data } = supabase.storage
-      .from("profile-pictures")
-      .getPublicUrl(filePath)
+    // Try to create a signed URL (works for private buckets). If bucket is public,
+    // you can still rely on getPublicUrl, but signed URL is safer.
+    const { data: signedData, error: signedErr } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(filePath, 60 * 60) // 1 hour
 
-    if (!data) {
-      throw new Error("Failed to get public URL")
+    if (signedErr || !signedData) {
+      // Fallback to public URL if signed URL creation fails
+      const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(filePath)
+      if (!pub) throw new Error("Failed to get file URL")
+
+      const { error: updateError } = await supabase
+        .from("user_profiles")
+        .update({ profile_picture_url: pub.publicUrl })
+        .eq("id", userId)
+
+      if (updateError) {
+        throw new Error(`Failed to update profile: ${updateError.message}`)
+      }
+
+      return { url: pub.publicUrl }
     }
 
-    // Update user profile with picture URL
+    // Update profile with the storage path (or signed URL). Storing the path makes
+    // it easier to rotate or recreate signed URLs later; we store the path here for
+    // compatibility with existing code by writing the signed URL into profile_picture_url.
     const { error: updateError } = await supabase
       .from("user_profiles")
-      .update({ profile_picture_url: data.publicUrl })
+      .update({ profile_picture_url: signedData.signedUrl })
       .eq("id", userId)
 
     if (updateError) {
       throw new Error(`Failed to update profile: ${updateError.message}`)
     }
 
-    return { url: data.publicUrl }
+    return { url: signedData.signedUrl }
   } catch (error) {
     throw error instanceof Error
       ? error
@@ -94,7 +122,7 @@ export async function deleteProfilePicture(): Promise<void> {
   }
 
   try {
-    const supabase = await createClient()
+    const supabase = createSupabaseJsClient(SUPABASE_URL, SERVICE_ROLE_KEY!)
 
     // Get current user profile to find picture URL
     const { data: profile, error: fetchError } = await supabase
@@ -107,16 +135,42 @@ export async function deleteProfilePicture(): Promise<void> {
       throw new Error(`Failed to fetch profile: ${fetchError.message}`)
     }
 
-    // Delete from storage if URL exists
+    // Delete from storage if URL/path exists
     if (profile?.profile_picture_url) {
-      // Extract file path from URL
-      const url = new URL(profile.profile_picture_url)
-      const filePath = url.pathname.split("/").pop()
+      let filePath: string | null = null
+
+      try {
+        const val = profile.profile_picture_url
+
+        if (val.startsWith("http")) {
+          // Supabase public/signed URL patterns include:
+          // /storage/v1/object/public/{bucket}/{path}
+          // /storage/v1/object/sign/{bucket}/{path}
+          const publicMarker = `/storage/v1/object/public/${BUCKET}/`
+          const signMarker = `/storage/v1/object/sign/${BUCKET}/`
+
+          const idxPub = val.indexOf(publicMarker)
+          const idxSign = val.indexOf(signMarker)
+
+          if (idxPub !== -1) {
+            filePath = val.substring(idxPub + publicMarker.length)
+          } else if (idxSign !== -1) {
+            filePath = val.substring(idxSign + signMarker.length).split("?")[0]
+          } else {
+            // Last resort: try to take everything after the bucket name
+            const parts = val.split(`/${BUCKET}/`)
+            if (parts.length > 1) filePath = parts[1].split("?")[0]
+          }
+        } else {
+          // If stored value is already the path
+          filePath = val
+        }
+      } catch (e) {
+        console.warn("Could not parse profile picture URL for deletion", e)
+      }
 
       if (filePath) {
-        const { error: deleteError } = await supabase.storage
-          .from("profile-pictures")
-          .remove([`profile-pictures/${filePath}`])
+        const { error: deleteError } = await supabase.storage.from(BUCKET).remove([filePath])
 
         if (deleteError) {
           console.error("Storage deletion failed:", deleteError)
@@ -126,10 +180,7 @@ export async function deleteProfilePicture(): Promise<void> {
     }
 
     // Update profile to remove picture URL
-    const { error: updateError } = await supabase
-      .from("user_profiles")
-      .update({ profile_picture_url: null })
-      .eq("id", userId)
+    const { error: updateError } = await supabase.from("user_profiles").update({ profile_picture_url: null }).eq("id", userId)
 
     if (updateError) {
       throw new Error(`Failed to update profile: ${updateError.message}`)
