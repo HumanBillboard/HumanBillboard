@@ -30,9 +30,8 @@ next-env.d.ts
 *.md
 !README.md
 
-# api
-apikey-HumanBillboard_securitywebsite.txt
+# api keys
+apikey-*
 
 # local vscode settings
 .vscode/
-
