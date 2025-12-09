@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { auth } from "@clerk/nextjs/server"
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import ApplicationForm from "@/components/application-form"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ export default async function ApplyCampaignPage({ params }: { params: Promise<{ 
     redirect("/auth/login")
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", userId).single()
 
   if (!profile) {

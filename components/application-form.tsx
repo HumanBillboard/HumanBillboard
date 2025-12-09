@@ -54,17 +54,30 @@ export default function ApplicationForm({ campaignId, advertiserId }: Applicatio
         status: "pending",
       })
 
-      if (error) throw error
+      if (error) {
+        // Check for duplicate application error (409 conflict)
+        if (error.code === "23505") {
+          setError("You have already applied to this campaign.")
+          setTimeout(() => router.push("/advertiser/dashboard"), 2000)
+          return
+        }
+        throw error
+      }
 
-      // Send email notification to business owner
+      // Send email notification to business owner (don't let this fail the application)
       if (campaign?.business && advertiser) {
-        await sendApplicationReceivedNotification(
-          campaign.business.email || "",
-          campaign.business.company_name || campaign.business.full_name || "Business Owner",
-          campaign.title,
-          advertiser.full_name || "An advertiser",
-          validatedData.message || undefined
-        )
+        try {
+          await sendApplicationReceivedNotification(
+            campaign.business.email || "",
+            campaign.business.company_name || campaign.business.full_name || "Business Owner",
+            campaign.title,
+            advertiser.full_name || "An advertiser",
+            validatedData.message || undefined
+          )
+        } catch (emailError) {
+          console.error("Failed to send notification email:", emailError)
+          // Continue anyway - application was created successfully
+        }
       }
 
       router.push("/advertiser/dashboard")
