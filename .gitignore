@@ -29,6 +29,7 @@ next-env.d.ts
 # .md files except readme.md
 *.md
 !README.md
+!CODING_STANDARDS.md
 
 # api keys
 apikey-*
