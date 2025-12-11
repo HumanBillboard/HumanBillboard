@@ -30,6 +30,7 @@ next-env.d.ts
 *.md
 !README.md
 !CODING_STANDARDS.md
+!Acknowledgements.md
 
 # api keys
 apikey-*
